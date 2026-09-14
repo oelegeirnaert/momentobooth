@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:momento_booth/app_localizations.dart';
 import 'package:momento_booth/models/photo_capture.dart';
 import 'package:momento_booth/views/components/dialogs/modal_dialog.dart';
 
@@ -27,8 +28,9 @@ class _ImmichPhotoSelectionDialogState
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return ModalDialog(
-      title: 'Upload pictures to Immich',
+      title: localizations.wallPhotoSelectionTitle,
       body: SizedBox(
         width: 700,
         height: 420,
@@ -39,23 +41,24 @@ class _ImmichPhotoSelectionDialogState
           : [
               Button(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+                child: Text(localizations.genericCancelButton),
               ),
               FilledButton(
                 onPressed: selected.isEmpty ? null : _confirm,
-                child: Text('Upload ${selected.length}'),
+                child: Text(
+                  localizations.wallPhotoSelectionShowButton(selected.length),
+                ),
               ),
             ],
     );
   }
 
   Widget _selectionBody() {
+    final localizations = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Select the pictures to upload. All pictures are selected by default.',
-        ),
+        Text(localizations.wallPhotoSelectionDescription),
         const SizedBox(height: 16),
         Expanded(
           child: GridView.builder(
@@ -114,19 +117,20 @@ class _ImmichPhotoSelectionDialogState
         ),
         if (error != null) ...[
           const SizedBox(height: 8),
-          Text('Upload failed: $error'),
+          Text(localizations.wallPhotoSelectionError(error.toString())),
         ],
       ],
     );
   }
 
   Widget _uploadingBody() {
-    return const Column(
+    final localizations = AppLocalizations.of(context)!;
+    return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         ProgressRing(),
         SizedBox(height: 16),
-        Text('Uploading selected pictures to Immich...'),
+        Text(localizations.wallPhotoSelectionPreparing),
       ],
     );
   }

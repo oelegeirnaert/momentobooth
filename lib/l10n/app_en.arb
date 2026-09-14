@@ -58,11 +58,18 @@
     "shareScreenRetakeButton": "Retake",
     "shareScreenChangeButton": "Change",
     "shareScreenGetQrButton": "Get QR",
+    "shareScreenShowOnWallButton": "Show on wall",
     "shareScreenQrUploading": "Uploading",
     "shareScreenShowQrButton": "Show QR",
     "shareScreenRetryQrButton": "Error, retry?",
     "shareScreenPrinting": "Printing...",
     "shareScreenPrintUnsuccesful": "Print unsuccessful",
+
+    "wallPhotoSelectionTitle": "Show pictures on the wall",
+    "wallPhotoSelectionDescription": "Select the pictures to show on the wall. All pictures are selected by default.",
+    "wallPhotoSelectionShowButton": "{count, plural, =1{Show 1 on wall} other{Show {count} on wall}}",
+    "wallPhotoSelectionPreparing": "Preparing the selected pictures for the wall...",
+    "wallPhotoSelectionError": "Could not show the pictures on the wall: {error}",
 
     "qrDialogTitle": "Share using a QR code",
     "qrDialogUploading": "Uploading...",

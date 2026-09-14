@@ -162,7 +162,7 @@ class ShareScreenView
             child: PhotoBoothButton.action(
               onPressed: controller.onClickImmich,
               child: AutoSizeTextAndIcon(
-                text: 'Show on wall',
+                text: localizations.shareScreenShowOnWallButton,
                 leftIcon: LucideIcons.projector,
                 autoSizeGroup: controller.actionButtonGroup,
               ),
