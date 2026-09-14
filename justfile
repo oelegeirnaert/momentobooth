@@ -59,6 +59,9 @@ build-release:
 build-release:
   fvm flutter build linux --release
 
+run:
+  fvm flutter run -d linux
+
 [macos]
 build-release:
   fvm flutter build macos --release
