@@ -6,6 +6,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:momento_booth/main.dart';
 import 'package:momento_booth/managers/photos_manager.dart';
 import 'package:momento_booth/managers/printing_manager.dart';
+import 'package:momento_booth/managers/project_manager.dart';
 import 'package:momento_booth/managers/settings_manager.dart';
 import 'package:momento_booth/managers/sfx_manager.dart';
 import 'package:momento_booth/managers/stats_manager.dart';
@@ -28,6 +29,7 @@ class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel>
     with PrinterStatusDialogMixin<ShareScreenViewModel> {
   AutoSizeGroup actionButtonGroup = AutoSizeGroup(),
       navigationButtonGroup = AutoSizeGroup();
+  bool _immichDialogOpen = false;
 
   // Initialization/Deinitialization
 
@@ -94,10 +96,12 @@ class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel>
   }
 
   Future<void> onClickImmich() async {
-    final settings = getIt<SettingsManager>().settings.immichIntegration;
-    if (!settings.enable || settings.serverUrl.trim().isEmpty) {
-      unawaited(
-        showUserDialog(
+    if (_immichDialogOpen) return;
+    _immichDialogOpen = true;
+    try {
+      final settings = getIt<SettingsManager>().settings.immichIntegration;
+      if (!settings.enable || settings.serverUrl.trim().isEmpty) {
+        await showUserDialog(
           barrierDismissible: true,
           dialog: const ModalDialog(
             title: 'Immich is not configured',
@@ -105,24 +109,24 @@ class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel>
               'Enable Immich publishing and configure the Immich server URL before uploading pictures.',
             ),
           ),
-        ),
-      );
-      return;
-    }
+        );
+        return;
+      }
 
-    final photos = viewModel.immichCandidates;
-    if (!contextAccessor.buildContext.mounted || photos.isEmpty) return;
+      final photos = viewModel.immichCandidates;
+      if (!contextAccessor.buildContext.mounted || photos.isEmpty) return;
 
-    unawaited(
-      showUserDialog(
+      await showUserDialog(
         barrierDismissible: false,
         dialog: ImmichPhotoSelectionDialog(
           photos: photos,
           onConfirm: (selectedPhotos) =>
               ImmichRepository().publishAll(selectedPhotos, settings),
         ),
-      ),
-    );
+      );
+    } finally {
+      _immichDialogOpen = false;
+    }
   }
 
   int successfulPrints = 0;
@@ -143,6 +147,10 @@ class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel>
       dialog: Observer(
         builder: (_) {
           return PrintDialog(
+            fixedNumberOfPrints:
+                getIt<ProjectManager>().settings.fixedNumberOfPrints == 0
+                ? null
+                : getIt<ProjectManager>().settings.fixedNumberOfPrints,
             onPrintPressed: (size, copies) {
               navigator.pop();
               onConfirmPrint(size, copies);

@@ -37,6 +37,7 @@ sealed class ProjectSettings
     @Default([]) List<Language> availableLanguages,
     @Default(true) bool showGallery,
     @Default(true) bool showGetQrButton,
+    @Default(0) int fixedNumberOfPrints,
   }) = _ProjectSettings;
 
   factory ProjectSettings.withDefaults() => ProjectSettings.fromJson({});

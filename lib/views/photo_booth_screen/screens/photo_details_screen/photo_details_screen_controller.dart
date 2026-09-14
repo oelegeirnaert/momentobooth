@@ -5,6 +5,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:momento_booth/main.dart';
 import 'package:momento_booth/managers/printing_manager.dart';
+import 'package:momento_booth/managers/project_manager.dart';
 import 'package:momento_booth/managers/settings_manager.dart';
 import 'package:momento_booth/models/settings.dart';
 import 'package:momento_booth/repositories/immich_repository.dart';
@@ -21,6 +22,7 @@ import 'package:path/path.dart' as path;
 class PhotoDetailsScreenController
     extends ScreenControllerBase<PhotoDetailsScreenViewModel> {
   AutoSizeGroup actionButtonGroup = AutoSizeGroup();
+  bool _immichDialogOpen = false;
 
   // Initialization/Deinitialization
 
@@ -56,10 +58,12 @@ class PhotoDetailsScreenController
   }
 
   Future<void> onClickImmich() async {
-    final settings = getIt<SettingsManager>().settings.immichIntegration;
-    if (!settings.enable || settings.serverUrl.trim().isEmpty) {
-      unawaited(
-        showUserDialog(
+    if (_immichDialogOpen) return;
+    _immichDialogOpen = true;
+    try {
+      final settings = getIt<SettingsManager>().settings.immichIntegration;
+      if (!settings.enable || settings.serverUrl.trim().isEmpty) {
+        await showUserDialog(
           barrierDismissible: true,
           dialog: const ModalDialog(
             title: 'Immich is not configured',
@@ -67,16 +71,14 @@ class PhotoDetailsScreenController
               'Enable Immich publishing and configure the Immich server URL before uploading pictures.',
             ),
           ),
-        ),
-      );
-      return;
-    }
+        );
+        return;
+      }
 
-    final photos = await viewModel.immichCandidates;
-    if (!contextAccessor.buildContext.mounted || photos.isEmpty) return;
+      final photos = await viewModel.immichCandidates;
+      if (!contextAccessor.buildContext.mounted || photos.isEmpty) return;
 
-    unawaited(
-      showUserDialog(
+      await showUserDialog(
         barrierDismissible: false,
         dialog: ImmichPhotoSelectionDialog(
           photos: photos,
@@ -85,8 +87,10 @@ class PhotoDetailsScreenController
             getIt<SettingsManager>().settings.immichIntegration,
           ),
         ),
-      ),
-    );
+      );
+    } finally {
+      _immichDialogOpen = false;
+    }
   }
 
   int successfulPrints = 0;
@@ -107,6 +111,10 @@ class PhotoDetailsScreenController
       dialog: Observer(
         builder: (_) {
           return PrintDialog(
+            fixedNumberOfPrints:
+                getIt<ProjectManager>().settings.fixedNumberOfPrints == 0
+                ? null
+                : getIt<ProjectManager>().settings.fixedNumberOfPrints,
             onPrintPressed: (size, copies) {
               navigator.pop();
               onConfirmPrint(size, copies);

@@ -308,6 +308,8 @@ abstract class SettingsOverlayViewModelBase extends ScreenViewModelBase
   bool get showGallerySetting => getIt<ProjectManager>().settings.showGallery;
   bool get showGetQrButtonSetting =>
       getIt<ProjectManager>().settings.showGetQrButton;
+  int get fixedNumberOfPrintsSetting =>
+      getIt<ProjectManager>().settings.fixedNumberOfPrints;
 
   // System settings current values
   int get captureDelaySecondsSetting =>

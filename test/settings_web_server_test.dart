@@ -72,6 +72,7 @@ void main() {
 
       expect(updated.showGallery, isFalse);
       expect(updated.showMomentoLogo, original.showMomentoLogo);
+      expect(updated.fixedNumberOfPrints, original.fixedNumberOfPrints);
       expect(updated.showGetQrButton, original.showGetQrButton);
     });
 
@@ -113,6 +114,7 @@ void main() {
         expect(html, contains('Face recognition'));
         expect(html, contains('Debug'));
         expect(html, contains('Allow users to browse the gallery'));
+        expect(html, contains('Fixed number of prints'));
         expect(
           html,
           contains('Show MomentoBooth logo on touch-to-start screen'),

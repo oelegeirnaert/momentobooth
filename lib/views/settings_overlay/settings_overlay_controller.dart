@@ -356,6 +356,16 @@ class SettingsOverlayController
     }
   }
 
+  void onFixedNumberOfPrintsChanged(int? fixedNumberOfPrints) {
+    if (fixedNumberOfPrints != null) {
+      viewModel.updateProjectSettings(
+        (settings) => settings.copyWith(
+          fixedNumberOfPrints: fixedNumberOfPrints.clamp(0, 99),
+        ),
+      );
+    }
+  }
+
   void onEnableWakelockChanged(bool? enableWakelock) {
     if (enableWakelock != null) {
       viewModel.updateSettings(

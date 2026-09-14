@@ -437,6 +437,10 @@ class SettingsWebServerManager {
               <input id="projectShowMomentoLogo" name="projectShowMomentoLogo" type="checkbox" />
               <label for="projectShowMomentoLogo">Show MomentoBooth logo on touch-to-start screen</label>
             </div>
+            <div class="field">
+              <label for="projectFixedNumberOfPrints">Fixed number of prints (0 = allow changing)</label>
+              <input id="projectFixedNumberOfPrints" name="projectFixedNumberOfPrints" type="number" min="0" max="99" step="1" />
+            </div>
           </div>
           <p id="projectSettingsStatus">Project settings require an open project.</p>
         </div>
@@ -756,6 +760,7 @@ class SettingsWebServerManager {
       function loadProjectSettings(settings) {
         document.getElementById('projectShowGallery').checked = settings.showGallery !== false;
         document.getElementById('projectShowMomentoLogo').checked = settings.showMomentoLogo !== false;
+        document.getElementById('projectFixedNumberOfPrints').value = settings.fixedNumberOfPrints ?? 0;
         document.getElementById('projectSettingsStatus').textContent = 'Project settings loaded';
       }
 
@@ -842,6 +847,7 @@ class SettingsWebServerManager {
           body: JSON.stringify({
             showGallery: document.getElementById('projectShowGallery').checked,
             showMomentoLogo: document.getElementById('projectShowMomentoLogo').checked,
+            fixedNumberOfPrints: Math.max(0, Math.min(99, Number(document.getElementById('projectFixedNumberOfPrints').value))),
           }),
         });
         if (response.status === 409) {

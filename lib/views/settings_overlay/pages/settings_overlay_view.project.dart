@@ -107,6 +107,15 @@ Widget _getProjectSettings(
                 value: () => viewModel.showGallerySetting,
                 onChanged: controller.onShowGalleryChanged,
               ),
+              SettingsNumberEditTile<int>(
+                icon: LucideIcons.printer,
+                title: "Fixed number of prints",
+                subtitle: "If set above 0, users must confirm printing but cannot change the number of prints.",
+                value: () => viewModel.fixedNumberOfPrintsSetting,
+                onFinishedEditing: controller.onFixedNumberOfPrintsChanged,
+                min: 0,
+                max: 99,
+              ),
               SettingsToggleTile(
                 icon: LucideIcons.qrCode,
                 title: "Show ‘Get QR’ button",

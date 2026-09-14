@@ -10,37 +10,50 @@ import 'package:momento_booth/views/components/buttons/photo_booth_outlined_butt
 import 'package:momento_booth/views/components/dialogs/modal_dialog.dart';
 
 class PrintDialog extends StatefulWidget {
-
   final VoidCallback onCancel;
   final void Function(PrintSize size, int copies) onPrintPressed;
   final int maxPrints;
+  final int? fixedNumberOfPrints;
 
   const PrintDialog({
     super.key,
     required this.onCancel,
     required this.onPrintPressed,
     this.maxPrints = 5,
+    this.fixedNumberOfPrints,
   });
 
   @override
   State<PrintDialog> createState() => _PrintDialogState();
-
 }
 
 class _PrintDialogState extends State<PrintDialog> {
-
-  int numPrints = 1;
+  late int numPrints = widget.fixedNumberOfPrints ?? 1;
   PrintSize printSize = PrintSize.normal;
 
   int get gridX => switch (printSize) {
-    PrintSize.small => getIt<SettingsManager>().settings.hardware.printLayoutSettings.gridSmall.x,
-    PrintSize.tiny => getIt<SettingsManager>().settings.hardware.printLayoutSettings.gridTiny.x,
+    PrintSize.small =>
+      getIt<SettingsManager>()
+          .settings
+          .hardware
+          .printLayoutSettings
+          .gridSmall
+          .x,
+    PrintSize.tiny =>
+      getIt<SettingsManager>().settings.hardware.printLayoutSettings.gridTiny.x,
     _ => 1,
   };
 
   int get gridY => switch (printSize) {
-    PrintSize.small => getIt<SettingsManager>().settings.hardware.printLayoutSettings.gridSmall.y,
-    PrintSize.tiny => getIt<SettingsManager>().settings.hardware.printLayoutSettings.gridTiny.y,
+    PrintSize.small =>
+      getIt<SettingsManager>()
+          .settings
+          .hardware
+          .printLayoutSettings
+          .gridSmall
+          .y,
+    PrintSize.tiny =>
+      getIt<SettingsManager>().settings.hardware.printLayoutSettings.gridTiny.y,
     _ => 1,
   };
 
@@ -48,7 +61,11 @@ class _PrintDialogState extends State<PrintDialog> {
   Widget build(BuildContext context) {
     AppLocalizations localizations = AppLocalizations.of(context)!;
 
-    const textStyle = TextStyle(fontWeight: FontWeight.w500, fontSize: 18, height: 1);
+    const textStyle = TextStyle(
+      fontWeight: FontWeight.w500,
+      fontSize: 18,
+      height: 1,
+    );
 
     return ModalDialog(
       title: localizations.printDialogTitle,
@@ -57,10 +74,7 @@ class _PrintDialogState extends State<PrintDialog> {
         children: [
           Row(
             children: [
-              Text(
-                localizations.printDialogSizeSetting,
-                style: textStyle,
-              ),
+              Text(localizations.printDialogSizeSetting, style: textStyle),
               const SizedBox(width: 12),
               PrintSizeChoice(
                 printSize: printSize,
@@ -70,31 +84,38 @@ class _PrintDialogState extends State<PrintDialog> {
               ),
             ],
           ),
-          const SizedBox(height: 16.0),
-          Text(
-            localizations.printDialogNoOfPrintsSetting,
-            textAlign: TextAlign.left,
-            style: textStyle,
-          ),
-          Text(
-            localizations.printDialogSummary(numPrints, numPrints * gridX * gridY),
-            textAlign: TextAlign.left,
-          ),
-          const SizedBox(height: 16.0),
-          Material(
-            color: Colors.transparent,
-            child: Slider(
-              activeColor: FluentTheme.of(context).accentColor,
-              value: numPrints.toDouble(),
-              min: 1,
-              max: widget.maxPrints.toDouble(),
-              divisions: widget.maxPrints - 1,
-              label: numPrints.toString(),
-              onChanged: (value) {
-                setState(() => numPrints = value.round());
-              },
+          if (widget.fixedNumberOfPrints == null) ...[
+            const SizedBox(height: 16.0),
+            Text(
+              localizations.printDialogNoOfPrintsSetting,
+              textAlign: TextAlign.left,
+              style: textStyle,
             ),
+          ],
+          Text(
+            localizations.printDialogSummary(
+              numPrints,
+              numPrints * gridX * gridY,
+            ),
+            textAlign: TextAlign.left,
           ),
+          if (widget.fixedNumberOfPrints == null) ...[
+            const SizedBox(height: 16.0),
+            Material(
+              color: Colors.transparent,
+              child: Slider(
+                activeColor: FluentTheme.of(context).accentColor,
+                value: numPrints.toDouble(),
+                min: 1,
+                max: widget.maxPrints.toDouble(),
+                divisions: widget.maxPrints - 1,
+                label: numPrints.toString(),
+                onChanged: (value) {
+                  setState(() => numPrints = value.round());
+                },
+              ),
+            ),
+          ],
         ],
       ),
       actions: [
@@ -111,30 +132,31 @@ class _PrintDialogState extends State<PrintDialog> {
       dialogType: ModalDialogType.input,
     );
   }
-
 }
 
 class PrintSizeChoice extends StatelessWidget {
-
   final PrintSize printSize;
   final ValueChanged<PrintSize> onChanged;
 
-  const PrintSizeChoice({super.key, required this.printSize, required this.onChanged});
+  const PrintSizeChoice({
+    super.key,
+    required this.printSize,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final settings = getIt<SettingsManager>().settings.hardware.printLayoutSettings;
+    final settings =
+        getIt<SettingsManager>().settings.hardware.printLayoutSettings;
     return SegmentedButton<PrintSize>(
       style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.resolveWith<Color>(
-          (states) {
-              if (states.contains(WidgetState.selected)) {
-                return FluentTheme.of(context).accentColor;
-              }
-              return Colors.transparent;
-            },
-        ),
-        iconColor: WidgetStateProperty.all(Colors.white)
+        backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return FluentTheme.of(context).accentColor;
+          }
+          return Colors.transparent;
+        }),
+        iconColor: WidgetStateProperty.all(Colors.white),
       ),
       segments: [
         const ButtonSegment<PrintSize>(
@@ -161,5 +183,4 @@ class PrintSizeChoice extends StatelessWidget {
       },
     );
   }
-
 }
