@@ -102,8 +102,10 @@ class StartScreenView
             ),
           ),
         ),
-        if (viewModel.showMomentoLogo)
-          Flexible(fit: FlexFit.tight, child: _logo),
+        Flexible(
+          fit: FlexFit.tight,
+          child: viewModel.showMomentoLogo ? _logo : const SizedBox(),
+        ),
       ],
     );
   }

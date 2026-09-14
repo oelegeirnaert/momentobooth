@@ -27,6 +27,9 @@ gen-code:
 gen-l10n:
   fvm flutter gen-l10n
 
+generate-settings-certificate:
+  fvm dart run tool/generate_settings_certificate.dart
+
 ##
 # Signing
 ##
@@ -53,20 +56,25 @@ watch-code:
 
 [windows]
 build-release:
+  just generate-settings-certificate
   fvm flutter build windows --release
 
 [linux]
 build-release:
+  just generate-settings-certificate
   fvm flutter build linux --release
 
 run:
+  just generate-settings-certificate
   fvm flutter run -d linux
 
 [macos]
 build-release:
+  just generate-settings-certificate
   fvm flutter build macos --release
 
 test:
+  just generate-settings-certificate
   fvm flutter test
 
 ##

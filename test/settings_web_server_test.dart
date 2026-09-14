@@ -85,10 +85,10 @@ void main() {
           InternetAddress('10.0.0.5'),
         ], port: 8765);
 
-        expect(urls, contains('http://192.168.1.20:8765'));
-        expect(urls, contains('http://10.0.0.5:8765'));
-        expect(urls, contains('http://localhost:8765'));
-        expect(urls, contains('http://127.0.0.1:8765'));
+        expect(urls, contains('https://192.168.1.20:8765'));
+        expect(urls, contains('https://10.0.0.5:8765'));
+        expect(urls, contains('https://localhost:8765'));
+        expect(urls, contains('https://127.0.0.1:8765'));
       },
     );
 
@@ -102,7 +102,10 @@ void main() {
 
       try {
         final client = HttpClient();
-        final request = await client.get('localhost', port, '/');
+        client.badCertificateCallback = (_, _, _) => true;
+        final request = await client.getUrl(
+          Uri(scheme: 'https', host: 'localhost', port: port, path: '/'),
+        );
         final response = await request.close();
         final html = await response.transform(utf8.decoder).join();
 
@@ -134,11 +137,15 @@ void main() {
 
       try {
         final client = HttpClient();
+        client.badCertificateCallback = (_, _, _) => true;
 
-        final saveRequest = await client.post(
-          'localhost',
-          port,
-          '/settings/secret',
+        final saveRequest = await client.postUrl(
+          Uri(
+            scheme: 'https',
+            host: 'localhost',
+            port: port,
+            path: '/settings/secret',
+          ),
         );
         saveRequest.headers.contentType = ContentType.json;
         saveRequest.write(
@@ -147,10 +154,14 @@ void main() {
         final saveResponse = await saveRequest.close();
         expect(saveResponse.statusCode, HttpStatus.ok);
 
-        final readRequest = await client.get(
-          'localhost',
-          port,
-          '/settings/secret?key=immich_api_key',
+        final readRequest = await client.getUrl(
+          Uri(
+            scheme: 'https',
+            host: 'localhost',
+            port: port,
+            path: '/settings/secret',
+            queryParameters: {'key': 'immich_api_key'},
+          ),
         );
         final readResponse = await readRequest.close();
         final body = await readResponse.transform(utf8.decoder).join();

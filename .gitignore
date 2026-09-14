@@ -61,6 +61,9 @@ lib/src/**/*.dart
 # Output
 dist/
 
+# Locally generated HTTPS settings server credentials
+assets/security/*.pem
+
 # mdBook output
 index.html
 

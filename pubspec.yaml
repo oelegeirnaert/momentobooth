@@ -127,6 +127,7 @@ flutter:
     - assets/svg/flags/
     - assets/fonts/brandon_grotesque/
     - assets/scripts/
+    - assets/security/
     - assets/sounds/
 
   fonts:

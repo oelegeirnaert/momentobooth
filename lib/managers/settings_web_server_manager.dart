@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:momento_booth/main.dart';
 import 'package:momento_booth/managers/project_manager.dart';
 import 'package:momento_booth/managers/settings_manager.dart';
@@ -32,12 +33,12 @@ class SettingsWebServerManager {
           address.address == '127.0.0.1' ||
           address.address == '::1';
       if (!isLoopback) {
-        urls.add('http://${address.address}:$port');
+        urls.add('https://${address.address}:$port');
       }
     }
 
-    urls.add('http://localhost:$port');
-    urls.add('http://127.0.0.1:$port');
+    urls.add('https://localhost:$port');
+    urls.add('https://127.0.0.1:$port');
     return urls.toList()..sort();
   }
 
@@ -63,12 +64,27 @@ class SettingsWebServerManager {
   Future<void> initialize() async {
     if (_server != null) return;
 
-    _server = await HttpServer.bind(
+    final securityContext = SecurityContext()
+      ..useCertificateChainBytes(
+        await _loadTlsAsset('settings_server_cert.pem'),
+      )
+      ..usePrivateKeyBytes(await _loadTlsAsset('settings_server_key.pem'));
+
+    _server = await HttpServer.bindSecure(
       InternetAddress.anyIPv4,
       port,
+      securityContext,
       shared: true,
     );
     _server!.listen(_handleRequest);
+  }
+
+  Future<List<int>> _loadTlsAsset(String filename) async {
+    final sourceFile = File('assets/security/$filename');
+    if (sourceFile.existsSync()) return sourceFile.readAsBytes();
+
+    final asset = await rootBundle.load('assets/security/$filename');
+    return asset.buffer.asUint8List();
   }
 
   Future<void> stop() async {
