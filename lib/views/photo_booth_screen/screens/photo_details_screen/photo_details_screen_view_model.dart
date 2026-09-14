@@ -37,7 +37,8 @@ abstract class PhotoDetailsScreenViewModelBase extends ScreenViewModelBase
       getIt<SettingsManager>().settings.output.enableFirefoxSend;
   bool get showPrintButton =>
       getIt<SettingsManager>().settings.output.enablePrinting;
-  bool get showImmichButton => true;
+  bool get showImmichButton =>
+      getIt<SettingsManager>().settings.immichIntegration.enable;
   File? get file => File(path.join(outputDir.path, photoId));
   Future<List<MomentoBoothExifTag>> get metadata async =>
       await getMomentoBoothExifTagsFromFile(imageFilePath: file!.path);

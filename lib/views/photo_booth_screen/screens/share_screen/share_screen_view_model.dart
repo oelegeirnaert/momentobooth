@@ -30,7 +30,8 @@ abstract class ShareScreenViewModelBase extends ScreenViewModelBase with Store {
       getIt<SettingsManager>().settings.output.enableFirefoxSend;
   bool get showPrintButton =>
       getIt<SettingsManager>().settings.output.enablePrinting;
-  bool get showImmichButton => true;
+  bool get showImmichButton =>
+      getIt<SettingsManager>().settings.immichIntegration.enable;
 
   List<PhotoCapture> get immichCandidates =>
       getIt<PhotosManager>().chosenPhotos.toList();
