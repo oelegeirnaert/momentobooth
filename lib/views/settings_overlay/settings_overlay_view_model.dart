@@ -285,6 +285,8 @@ abstract class SettingsOverlayViewModelBase extends ScreenViewModelBase
   UiTheme get uiTheme => getIt<ProjectManager>().settings.uiTheme;
   String get introScreenTouchToStartOverrideTextSetting =>
       getIt<ProjectManager>().settings.introScreenTouchToStartOverrideText;
+  bool get showMomentoLogoSetting =>
+      getIt<ProjectManager>().settings.showMomentoLogo;
   bool get displayConfettiSetting =>
       getIt<ProjectManager>().settings.displayConfetti;
   bool get customColorConfettiSetting =>

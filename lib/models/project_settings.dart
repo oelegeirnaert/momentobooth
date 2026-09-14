@@ -17,8 +17,9 @@ const defaultThemeColor = Color(0xFF0078C8);
 // ///////////////////// //
 
 @Freezed(fromJson: true, toJson: true)
-sealed class ProjectSettings with _$ProjectSettings implements TomlEncodableValue {
-
+sealed class ProjectSettings
+    with _$ProjectSettings
+    implements TomlEncodableValue {
   const ProjectSettings._();
 
   const factory ProjectSettings({
@@ -27,6 +28,7 @@ sealed class ProjectSettings with _$ProjectSettings implements TomlEncodableValu
     @Default(true) bool displayConfetti,
     @Default(false) bool customColorConfetti,
     @Default("") String introScreenTouchToStartOverrideText,
+    @Default(true) bool showMomentoLogo,
     @Default(true) bool enableSingleCapture,
     @Default(true) bool singlePhotoIsCollage,
     @Default(true) bool enableCollageCapture,
@@ -39,9 +41,9 @@ sealed class ProjectSettings with _$ProjectSettings implements TomlEncodableValu
 
   factory ProjectSettings.withDefaults() => ProjectSettings.fromJson({});
 
-  factory ProjectSettings.fromJson(Map<String, Object?> json) => _$ProjectSettingsFromJson(json);
+  factory ProjectSettings.fromJson(Map<String, Object?> json) =>
+      _$ProjectSettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }

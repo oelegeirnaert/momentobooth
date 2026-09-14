@@ -433,6 +433,10 @@ class SettingsWebServerManager {
               <input id="projectShowGallery" name="projectShowGallery" type="checkbox" />
               <label for="projectShowGallery">Allow users to browse the gallery</label>
             </div>
+            <div class="field checkbox-row">
+              <input id="projectShowMomentoLogo" name="projectShowMomentoLogo" type="checkbox" />
+              <label for="projectShowMomentoLogo">Show MomentoBooth logo on touch-to-start screen</label>
+            </div>
           </div>
           <p id="projectSettingsStatus">Project settings require an open project.</p>
         </div>
@@ -751,6 +755,7 @@ class SettingsWebServerManager {
 
       function loadProjectSettings(settings) {
         document.getElementById('projectShowGallery').checked = settings.showGallery !== false;
+        document.getElementById('projectShowMomentoLogo').checked = settings.showMomentoLogo !== false;
         document.getElementById('projectSettingsStatus').textContent = 'Project settings loaded';
       }
 
@@ -836,6 +841,7 @@ class SettingsWebServerManager {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             showGallery: document.getElementById('projectShowGallery').checked,
+            showMomentoLogo: document.getElementById('projectShowMomentoLogo').checked,
           }),
         });
         if (response.status === 409) {

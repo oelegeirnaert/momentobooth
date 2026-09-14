@@ -1,26 +1,40 @@
 part of '../settings_overlay_view.dart';
 
-Widget _getProjectSettings(SettingsOverlayViewModel viewModel, SettingsOverlayController controller) {
+Widget _getProjectSettings(
+  SettingsOverlayViewModel viewModel,
+  SettingsOverlayController controller,
+) {
   final isOpen = getIt<ProjectManager>().isOpen;
   return SettingsListPage(
     title: "Project",
     blocks: [
       Padding(
         padding: EdgeInsets.symmetric(vertical: 4.0),
-        child: Text("These settings are project-specific and override global behaviour. The settings are saved in your project directory, so the settings are also used when the project is opened on another computer.", style: TextStyle(fontSize: 16)),
+        child: Text(
+          "These settings are project-specific and override global behaviour. The settings are saved in your project directory, so the settings are also used when the project is opened on another computer.",
+          style: TextStyle(fontSize: 16),
+        ),
       ),
       Builder(
         builder: (context) {
-          if (isOpen) { return SizedBox();}
+          if (isOpen) {
+            return SizedBox();
+          }
           return Padding(
             padding: const EdgeInsets.only(top: 16.0),
-            child: InfoBar.warning(title: Text("Project settings can only be viewed and modified if a project is loaded.")),
+            child: InfoBar.warning(
+              title: Text(
+                "Project settings can only be viewed and modified if a project is loaded.",
+              ),
+            ),
           );
-        }
+        },
       ),
       Builder(
         builder: (context) {
-          if (!isOpen) { return SizedBox();}
+          if (!isOpen) {
+            return SizedBox();
+          }
           return SettingsSection(
             title: "UI settings for project",
             settings: [
@@ -58,8 +72,17 @@ Widget _getProjectSettings(SettingsOverlayViewModel viewModel, SettingsOverlayCo
                 icon: LucideIcons.heading,
                 title: "Alternative ‘Touch to start’ title text",
                 subtitle: "The override text that will be shown on the Start screen instead of ‘Touch to start’. Leave empty to show the default text from the translations data.",
-                controller: controller.introScreenTouchToStartOverrideTextController,
-                onFinishedEditing: controller.onIntroScreenTouchToStartOverrideText,
+                controller:
+                    controller.introScreenTouchToStartOverrideTextController,
+                onFinishedEditing:
+                    controller.onIntroScreenTouchToStartOverrideText,
+              ),
+              SettingsToggleTile(
+                icon: LucideIcons.image,
+                title: "Show MomentoBooth logo",
+                subtitle: "If enabled, the MomentoBooth logo is shown on the touch-to-start screen.",
+                value: () => viewModel.showMomentoLogoSetting,
+                onChanged: controller.onShowMomentoLogoChanged,
               ),
               SettingsComboBoxTile<Language>(
                 icon: LucideIcons.languages,
@@ -91,13 +114,15 @@ Widget _getProjectSettings(SettingsOverlayViewModel viewModel, SettingsOverlayCo
                 value: () => viewModel.showGetQrButtonSetting,
                 onChanged: controller.onShowGetQrButtonChanged,
               ),
-            ]
+            ],
           );
-        }
+        },
       ),
       Builder(
         builder: (context) {
-          if (!isOpen) { return SizedBox();}
+          if (!isOpen) {
+            return SizedBox();
+          }
           return SettingsSection(
             title: "Capture settings for project",
             settings: [
@@ -130,9 +155,9 @@ Widget _getProjectSettings(SettingsOverlayViewModel viewModel, SettingsOverlayCo
                 value: () => viewModel.collageModeSetting,
                 onChanged: controller.onCollageModeChanged,
               ),
-            ]
+            ],
           );
-        }
+        },
       ),
     ],
   );

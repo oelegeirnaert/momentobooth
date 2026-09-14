@@ -10,41 +10,56 @@ import 'package:momento_booth/views/base/screen_view_model_base.dart';
 
 part 'start_screen_view_model.g.dart';
 
-class StartScreenViewModel = StartScreenViewModelBase with _$StartScreenViewModel;
+class StartScreenViewModel = StartScreenViewModelBase
+    with _$StartScreenViewModel;
 
 abstract class StartScreenViewModelBase extends ScreenViewModelBase with Store {
+  @computed
+  List<LottieAnimationSettings> get introScreenLottieAnimations =>
+      getIt<SettingsManager>().settings.ui.introScreenLottieAnimations;
 
   @computed
-  List<LottieAnimationSettings> get introScreenLottieAnimations => getIt<SettingsManager>().settings.ui.introScreenLottieAnimations;
+  String? get touchToStartOverrideText => getIt<ProjectManager>()
+      .settings
+      .introScreenTouchToStartOverrideText
+      .nullIfEmpty;
 
   @computed
-  String? get touchToStartOverrideText => getIt<ProjectManager>().settings.introScreenTouchToStartOverrideText.nullIfEmpty;
+  bool get showSettingsButton =>
+      getIt<SettingsManager>().settings.ui.showSettingsButton;
 
   @computed
-  bool get showSettingsButton => getIt<SettingsManager>().settings.ui.showSettingsButton;
+  bool get showMomentoLogo => getIt<ProjectManager>().settings.showMomentoLogo;
 
   @computed
   List<String> get startTexts {
     if (touchToStartOverrideText != null) {
       return [touchToStartOverrideText!];
     } else if (getIt<ProjectManager>().availableLocalizations.isNotEmpty) {
-      return getIt<ProjectManager>().availableLocalizations.map((loc) => loc.startScreenTouchToStartButton).toList();
+      return getIt<ProjectManager>().availableLocalizations
+          .map((loc) => loc.startScreenTouchToStartButton)
+          .toList();
     } else {
       // This should cover both the system default language and when a language override is set in the project.
-      return [contextAccessor.buildContext.localizations.startScreenTouchToStartButton];
+      return [
+        contextAccessor
+            .buildContext
+            .localizations
+            .startScreenTouchToStartButton,
+      ];
     }
   }
-  
+
   @computed
   bool get singleStartText => startTexts.length == 1;
 
   @computed
-  bool get showTouchIndicator => getIt<SettingsManager>().settings.ui.showTouchIndicator;
+  bool get showTouchIndicator =>
+      getIt<SettingsManager>().settings.ui.showTouchIndicator;
 
   StartScreenViewModelBase({required super.contextAccessor}) {
     // Remove images in memory
     // Fixme: maybe somewhere else is nicer, but for now it's here.
     getIt<PhotosManager>().reset();
   }
-
 }

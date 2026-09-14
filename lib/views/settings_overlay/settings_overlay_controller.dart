@@ -340,6 +340,14 @@ class SettingsOverlayController
     }
   }
 
+  void onShowMomentoLogoChanged(bool? showMomentoLogo) {
+    if (showMomentoLogo != null) {
+      viewModel.updateProjectSettings(
+        (settings) => settings.copyWith(showMomentoLogo: showMomentoLogo),
+      );
+    }
+  }
+
   void onShowGetQrButtonChanged(bool? showGetQrButton) {
     if (showGetQrButton != null) {
       viewModel.updateProjectSettings(

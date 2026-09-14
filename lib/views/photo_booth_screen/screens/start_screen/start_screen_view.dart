@@ -10,8 +10,8 @@ import 'package:momento_booth/views/components/animations/repeating_indicator.da
 import 'package:momento_booth/views/photo_booth_screen/screens/start_screen/start_screen_controller.dart';
 import 'package:momento_booth/views/photo_booth_screen/screens/start_screen/start_screen_view_model.dart';
 
-class StartScreenView extends ScreenViewBase<StartScreenViewModel, StartScreenController> {
-
+class StartScreenView
+    extends ScreenViewBase<StartScreenViewModel, StartScreenController> {
   const StartScreenView({
     required super.viewModel,
     required super.controller,
@@ -26,11 +26,11 @@ class StartScreenView extends ScreenViewBase<StartScreenViewModel, StartScreenCo
         clipBehavior: Clip.none,
         children: [
           if (viewModel.showTouchIndicator)
-          RepeatingIndicator(
-            lottieAsset: 'assets/animations/Animation - 1764508028194.json',
-            cycleDuration: const Duration(seconds: 5),
-            size: 300,
-          ),
+            RepeatingIndicator(
+              lottieAsset: 'assets/animations/Animation - 1764508028194.json',
+              cycleDuration: const Duration(seconds: 5),
+              size: 300,
+            ),
           MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
@@ -48,12 +48,16 @@ class StartScreenView extends ScreenViewBase<StartScreenViewModel, StartScreenCo
                 child: IconButton(
                   icon: Padding(
                     padding: const EdgeInsets.all(32.0),
-                    child: Icon(LucideIcons.cog, size: 64, color: Colors.white.withAlpha(64)),
+                    child: Icon(
+                      LucideIcons.cog,
+                      size: 64,
+                      color: Colors.white.withAlpha(64),
+                    ),
                   ),
                   onPressed: controller.onPressedOpenSettings,
                 ),
               );
-            }
+            },
           ),
         ],
       ),
@@ -88,7 +92,9 @@ class StartScreenView extends ScreenViewBase<StartScreenViewModel, StartScreenCo
                 }).toList();
                 return AnimatedTextKit(
                   repeatForever: true,
-                  pause: viewModel.singleStartText ? const Duration(days: 9) : const Duration(seconds: 1),
+                  pause: viewModel.singleStartText
+                      ? const Duration(days: 9)
+                      : const Duration(seconds: 1),
                   onTap: controller.onPressedContinue,
                   animatedTexts: animatedTexts,
                 );
@@ -96,7 +102,8 @@ class StartScreenView extends ScreenViewBase<StartScreenViewModel, StartScreenCo
             ),
           ),
         ),
-        Flexible(fit: FlexFit.tight, child: _logo),
+        if (viewModel.showMomentoLogo)
+          Flexible(fit: FlexFit.tight, child: _logo),
       ],
     );
   }
@@ -114,5 +121,4 @@ class StartScreenView extends ScreenViewBase<StartScreenViewModel, StartScreenCo
       ),
     );
   }
-
 }
