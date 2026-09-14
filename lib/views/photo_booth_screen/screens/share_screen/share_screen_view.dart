@@ -9,7 +9,6 @@ import 'package:momento_booth/views/base/screen_view_base.dart';
 import 'package:momento_booth/views/components/imaging/image_with_loader_fallback.dart';
 import 'package:momento_booth/views/photo_booth_screen/screens/components/buttons/photo_booth_button.dart';
 import 'package:momento_booth/views/photo_booth_screen/screens/components/text/auto_size_text_and_icon.dart';
-import 'package:momento_booth/views/photo_booth_screen/screens/components/text/photo_booth_title.dart';
 import 'package:momento_booth/views/photo_booth_screen/screens/share_screen/share_screen_controller.dart';
 import 'package:momento_booth/views/photo_booth_screen/screens/share_screen/share_screen_view_model.dart';
 
@@ -109,10 +108,7 @@ class ShareScreenView
   Widget get _foregroundElements {
     return Column(
       children: [
-        Flexible(
-          fit: FlexFit.tight,
-          child: Center(child: PhotoBoothTitle(localizations.shareScreenTitle)),
-        ),
+        Flexible(fit: FlexFit.tight, child: const SizedBox()),
         Expanded(
           flex: 3,
           child: Row(
@@ -157,6 +153,17 @@ class ShareScreenView
               child: AutoSizeTextAndIcon(
                 text: localizations.photoDetailsScreenGetQrButton,
                 leftIcon: LucideIcons.scanQrCode,
+                autoSizeGroup: controller.actionButtonGroup,
+              ),
+            ),
+          ),
+        if (viewModel.showImmichButton)
+          Flexible(
+            child: PhotoBoothButton.action(
+              onPressed: controller.onClickImmich,
+              child: AutoSizeTextAndIcon(
+                text: 'Show on wall',
+                leftIcon: LucideIcons.projector,
                 autoSizeGroup: controller.actionButtonGroup,
               ),
             ),

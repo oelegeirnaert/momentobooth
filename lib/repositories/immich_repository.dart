@@ -8,6 +8,15 @@ import 'package:momento_booth/models/settings.dart';
 import 'package:momento_booth/repositories/secrets/secrets_repository.dart';
 
 class ImmichRepository {
+  Future<void> publishAll(
+    Iterable<PhotoCapture> photos,
+    ImmichIntegrationSettings settings,
+  ) async {
+    for (final photo in photos) {
+      await publish(photo, settings);
+    }
+  }
+
   Future<void> publish(
     PhotoCapture photo,
     ImmichIntegrationSettings settings,

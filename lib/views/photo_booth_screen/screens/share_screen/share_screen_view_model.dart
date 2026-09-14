@@ -10,6 +10,7 @@ import 'package:momento_booth/managers/photos_manager.dart';
 import 'package:momento_booth/managers/project_manager.dart';
 import 'package:momento_booth/managers/settings_manager.dart';
 import 'package:momento_booth/managers/stats_manager.dart';
+import 'package:momento_booth/models/photo_capture.dart';
 import 'package:momento_booth/models/project_settings.dart';
 import 'package:momento_booth/src/rust/api/ffsend.dart';
 import 'package:momento_booth/src/rust/utils/ffsend_client.dart';
@@ -29,6 +30,10 @@ abstract class ShareScreenViewModelBase extends ScreenViewModelBase with Store {
       getIt<SettingsManager>().settings.output.enableFirefoxSend;
   bool get showPrintButton =>
       getIt<SettingsManager>().settings.output.enablePrinting;
+  bool get showImmichButton => true;
+
+  List<PhotoCapture> get immichCandidates =>
+      getIt<PhotosManager>().chosenPhotos.toList();
   late final ConfettiController confettiController = ConfettiController(
     duration: const Duration(milliseconds: 100),
   )..play();

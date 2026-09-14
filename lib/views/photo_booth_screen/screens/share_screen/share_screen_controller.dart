@@ -1,15 +1,19 @@
 import 'dart:async';
 
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:momento_booth/main.dart';
 import 'package:momento_booth/managers/photos_manager.dart';
 import 'package:momento_booth/managers/printing_manager.dart';
+import 'package:momento_booth/managers/settings_manager.dart';
 import 'package:momento_booth/managers/sfx_manager.dart';
 import 'package:momento_booth/managers/stats_manager.dart';
 import 'package:momento_booth/models/settings.dart';
+import 'package:momento_booth/repositories/immich_repository.dart';
 import 'package:momento_booth/views/base/printer_status_dialog_mixin.dart';
 import 'package:momento_booth/views/base/screen_controller_base.dart';
+import 'package:momento_booth/views/components/dialogs/immich_photo_selection_dialog.dart';
 import 'package:momento_booth/views/components/dialogs/print_dialog.dart';
 import 'package:momento_booth/views/components/dialogs/retake_dialog.dart';
 import 'package:momento_booth/views/photo_booth_screen/screens/collage_maker_screen/collage_maker_screen.dart';
@@ -20,9 +24,10 @@ import 'package:momento_booth/views/photo_booth_screen/screens/start_screen/star
 import 'package:momento_booth/views/with_case_builders.dart';
 import 'package:path/path.dart' as path;
 
-class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel> with PrinterStatusDialogMixin<ShareScreenViewModel> {
-
-  AutoSizeGroup actionButtonGroup = AutoSizeGroup(), navigationButtonGroup = AutoSizeGroup();
+class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel>
+    with PrinterStatusDialogMixin<ShareScreenViewModel> {
+  AutoSizeGroup actionButtonGroup = AutoSizeGroup(),
+      navigationButtonGroup = AutoSizeGroup();
 
   // Initialization/Deinitialization
 
@@ -37,7 +42,7 @@ class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel> w
     router.go(StartScreen.defaultRoute);
   }
 
-  void onRetake (bool delete) {
+  void onRetake(bool delete) {
     navigator.pop();
     // The reset function will clear the capture mode, so we need to save it.
     final captureMode = getIt<PhotosManager>().captureMode;
@@ -53,8 +58,14 @@ class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel> w
   void onClickPrev() {
     logDebug("Clicked prev");
     if (viewModel.canRetake) {
-      showUserDialog(dialog: RetakeDialog(onDelete: () => onRetake(true), onKeep: () => onRetake(false), onCancel: () => navigator.pop() ), barrierDismissible: false);
-    } else {
+      showUserDialog(
+        dialog: RetakeDialog(
+          onDelete: () => onRetake(true),
+          onKeep: () => onRetake(false),
+          onCancel: () => navigator.pop(),
+        ),
+        barrierDismissible: false,
+      );
       getIt<StatsManager>().addCollageChange();
       router.go(CollageMakerScreen.defaultRoute);
     }
@@ -64,19 +75,53 @@ class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel> w
     viewModel.uploadPhotoToSend();
     showUserDialog(
       barrierDismissible: false,
-      dialog: Observer(builder: (_) {
-        return QrShareDialog(
-          state: viewModel.uploadFailed
-              ? ShareDialogState.error
-              : viewModel.uploadProgress != null || viewModel.qrUrl == null
-                  ? ShareDialogState.uploading
-                  : ShareDialogState.uploaded,
-          uploadProgress: (viewModel.uploadProgress ?? 0) * 100,
-          qrText: viewModel.qrUrl,
-          onDismiss: () => navigator.pop(),
-          onRedoUpload: viewModel.uploadPhotoToSend,
-        );
-      }),
+      dialog: Observer(
+        builder: (_) {
+          return QrShareDialog(
+            state: viewModel.uploadFailed
+                ? ShareDialogState.error
+                : viewModel.uploadProgress != null || viewModel.qrUrl == null
+                ? ShareDialogState.uploading
+                : ShareDialogState.uploaded,
+            uploadProgress: (viewModel.uploadProgress ?? 0) * 100,
+            qrText: viewModel.qrUrl,
+            onDismiss: () => navigator.pop(),
+            onRedoUpload: viewModel.uploadPhotoToSend,
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> onClickImmich() async {
+    final settings = getIt<SettingsManager>().settings.immichIntegration;
+    if (!settings.enable || settings.serverUrl.trim().isEmpty) {
+      unawaited(
+        showUserDialog(
+          barrierDismissible: true,
+          dialog: const ModalDialog(
+            title: 'Immich is not configured',
+            body: Text(
+              'Enable Immich publishing and configure the Immich server URL before uploading pictures.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final photos = viewModel.immichCandidates;
+    if (!contextAccessor.buildContext.mounted || photos.isEmpty) return;
+
+    unawaited(
+      showUserDialog(
+        barrierDismissible: false,
+        dialog: ImmichPhotoSelectionDialog(
+          photos: photos,
+          onConfirm: (selectedPhotos) =>
+              ImmichRepository().publishAll(selectedPhotos, settings),
+        ),
+      ),
     );
   }
 
@@ -85,7 +130,9 @@ class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel> w
   void resetPrint() {
     if (!contextAccessor.buildContext.mounted) return;
     viewModel
-      ..printText = successfulPrints > 0 ? "${localizations.genericPrintButton} +1" : localizations.genericPrintButton
+      ..printText = successfulPrints > 0
+          ? "${localizations.genericPrintButton} +1"
+          : localizations.genericPrintButton
       ..printEnabled = true;
   }
 
@@ -93,21 +140,24 @@ class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel> w
     if (!viewModel.printEnabled) return;
     showUserDialog(
       barrierDismissible: false,
-      dialog: Observer(builder: (_) {
-        return PrintDialog(
-          onPrintPressed: (size, copies) {
-            navigator.pop();
-            onConfirmPrint(size, copies);
-          },
-          onCancel: () => navigator.pop(),
-        );
-      }),
+      dialog: Observer(
+        builder: (_) {
+          return PrintDialog(
+            onPrintPressed: (size, copies) {
+              navigator.pop();
+              onConfirmPrint(size, copies);
+            },
+            onCancel: () => navigator.pop(),
+          );
+        },
+      ),
     );
   }
 
   Future<void> onConfirmPrint(PrintSize size, int copies) async {
     PrintSize usingSize = size;
-    if (size == PrintSize.normal && getIt<PhotosManager>().chosenPhotos.length == 3) {
+    if (size == PrintSize.normal &&
+        getIt<PhotosManager>().chosenPhotos.length == 3) {
       usingSize = PrintSize.split;
     }
 
@@ -120,21 +170,34 @@ class ShareScreenController extends ScreenControllerBase<ShareScreenViewModel> w
     // Get photo and print it.
     final pdfData = await getIt<PhotosManager>().getOutputPDF(usingSize);
     final lastFile = getIt<PhotosManager>().lastPhotoFile;
-    String jobName = lastFile != null ? path.basenameWithoutExtension(lastFile.path) : "MomentoBooth Picture";
+    String jobName = lastFile != null
+        ? path.basenameWithoutExtension(lastFile.path)
+        : "MomentoBooth Picture";
 
     bool success = false;
     try {
-      await getIt<PrintingManager>().printPdf(jobName, pdfData, copies: copies, printSize: usingSize);
+      await getIt<PrintingManager>().printPdf(
+        jobName,
+        pdfData,
+        copies: copies,
+        printSize: usingSize,
+      );
       success = true;
     } catch (e) {
       logError("Failed to print photo: $e");
     }
 
     successfulPrints += success ? copies : 0;
-    if (!success) unawaited(showUserDialog(dialog: const PrintingErrorDialog(), barrierDismissible: true));
+    if (!success) {
+      unawaited(
+        showUserDialog(
+          dialog: const PrintingErrorDialog(),
+          barrierDismissible: true,
+        ),
+      );
+    }
     resetPrint();
 
     await checkPrintersAndShowWarnings();
   }
-
 }

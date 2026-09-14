@@ -3,11 +3,13 @@ import 'dart:ui';
 
 import 'package:mobx/mobx.dart';
 import 'package:momento_booth/main.dart';
+import 'package:momento_booth/managers/photos_manager.dart';
 import 'package:momento_booth/managers/project_manager.dart';
 import 'package:momento_booth/managers/settings_manager.dart';
 import 'package:momento_booth/managers/stats_manager.dart';
 import 'package:momento_booth/models/gallery_image.dart';
 import 'package:momento_booth/models/maker_note_data.dart';
+import 'package:momento_booth/models/photo_capture.dart';
 import 'package:momento_booth/src/rust/api/ffsend.dart';
 import 'package:momento_booth/src/rust/api/images.dart';
 import 'package:momento_booth/src/rust/models/images.dart';
@@ -35,6 +37,7 @@ abstract class PhotoDetailsScreenViewModelBase extends ScreenViewModelBase
       getIt<SettingsManager>().settings.output.enableFirefoxSend;
   bool get showPrintButton =>
       getIt<SettingsManager>().settings.output.enablePrinting;
+  bool get showImmichButton => true;
   File? get file => File(path.join(outputDir.path, photoId));
   Future<List<MomentoBoothExifTag>> get metadata async =>
       await getMomentoBoothExifTagsFromFile(imageFilePath: file!.path);
@@ -42,6 +45,16 @@ abstract class PhotoDetailsScreenViewModelBase extends ScreenViewModelBase
       GalleryImage(file: file!, exifTags: await metadata);
   Future<MakerNoteData?> get makerNoteData async =>
       (await galleryImage).makerNoteData;
+
+  Future<List<PhotoCapture>> get immichCandidates async {
+    final sourcePhotos = (await makerNoteData)?.sourcePhotos;
+    if (sourcePhotos == null || sourcePhotos.isEmpty) return const [];
+
+    final sourceFilenames = sourcePhotos.map((photo) => photo.filename).toSet();
+    return getIt<PhotosManager>().photos
+        .where((photo) => sourceFilenames.contains(photo.filename))
+        .toList();
+  }
 
   @observable
   late String printText = localizations.genericPrintButton;

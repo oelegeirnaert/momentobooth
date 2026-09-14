@@ -1,20 +1,25 @@
 import 'dart:async';
 
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:momento_booth/main.dart';
 import 'package:momento_booth/managers/printing_manager.dart';
+import 'package:momento_booth/managers/settings_manager.dart';
 import 'package:momento_booth/models/settings.dart';
+import 'package:momento_booth/repositories/immich_repository.dart';
 import 'package:momento_booth/utils/hardware.dart';
 import 'package:momento_booth/views/base/screen_controller_base.dart';
+import 'package:momento_booth/views/components/dialogs/immich_photo_selection_dialog.dart';
+import 'package:momento_booth/views/components/dialogs/modal_dialog.dart';
 import 'package:momento_booth/views/components/dialogs/print_dialog.dart';
 import 'package:momento_booth/views/components/dialogs/printing_error_dialog.dart';
 import 'package:momento_booth/views/components/dialogs/qr_share_dialog.dart';
 import 'package:momento_booth/views/photo_booth_screen/screens/photo_details_screen/photo_details_screen_view_model.dart';
 import 'package:path/path.dart' as path;
 
-class PhotoDetailsScreenController extends ScreenControllerBase<PhotoDetailsScreenViewModel> {
-
+class PhotoDetailsScreenController
+    extends ScreenControllerBase<PhotoDetailsScreenViewModel> {
   AutoSizeGroup actionButtonGroup = AutoSizeGroup();
 
   // Initialization/Deinitialization
@@ -32,19 +37,55 @@ class PhotoDetailsScreenController extends ScreenControllerBase<PhotoDetailsScre
     viewModel.uploadPhotoToSend();
     showUserDialog(
       barrierDismissible: false,
-      dialog: Observer(builder: (_) {
-        return QrShareDialog(
-          state: viewModel.uploadFailed
-              ? ShareDialogState.error
-              : viewModel.uploadProgress != null || viewModel.qrUrl == null
-                  ? ShareDialogState.uploading
-                  : ShareDialogState.uploaded,
-          uploadProgress: (viewModel.uploadProgress ?? 0) * 100,
-          qrText: viewModel.qrUrl,
-          onDismiss: () => navigator.pop(),
-          onRedoUpload: viewModel.uploadPhotoToSend,
-        );
-      }),
+      dialog: Observer(
+        builder: (_) {
+          return QrShareDialog(
+            state: viewModel.uploadFailed
+                ? ShareDialogState.error
+                : viewModel.uploadProgress != null || viewModel.qrUrl == null
+                ? ShareDialogState.uploading
+                : ShareDialogState.uploaded,
+            uploadProgress: (viewModel.uploadProgress ?? 0) * 100,
+            qrText: viewModel.qrUrl,
+            onDismiss: () => navigator.pop(),
+            onRedoUpload: viewModel.uploadPhotoToSend,
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> onClickImmich() async {
+    final settings = getIt<SettingsManager>().settings.immichIntegration;
+    if (!settings.enable || settings.serverUrl.trim().isEmpty) {
+      unawaited(
+        showUserDialog(
+          barrierDismissible: true,
+          dialog: const ModalDialog(
+            title: 'Immich is not configured',
+            body: Text(
+              'Enable Immich publishing and configure the Immich server URL before uploading pictures.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final photos = await viewModel.immichCandidates;
+    if (!contextAccessor.buildContext.mounted || photos.isEmpty) return;
+
+    unawaited(
+      showUserDialog(
+        barrierDismissible: false,
+        dialog: ImmichPhotoSelectionDialog(
+          photos: photos,
+          onConfirm: (selectedPhotos) => ImmichRepository().publishAll(
+            selectedPhotos,
+            getIt<SettingsManager>().settings.immichIntegration,
+          ),
+        ),
+      ),
     );
   }
 
@@ -53,7 +94,9 @@ class PhotoDetailsScreenController extends ScreenControllerBase<PhotoDetailsScre
   void resetPrint() {
     if (!contextAccessor.buildContext.mounted) return;
     viewModel
-      ..printText = successfulPrints > 0 ? "${localizations.genericPrintButton} ↺" : localizations.genericPrintButton
+      ..printText = successfulPrints > 0
+          ? "${localizations.genericPrintButton} ↺"
+          : localizations.genericPrintButton
       ..printEnabled = true;
   }
 
@@ -61,15 +104,17 @@ class PhotoDetailsScreenController extends ScreenControllerBase<PhotoDetailsScre
     if (!viewModel.printEnabled) return;
     showUserDialog(
       barrierDismissible: false,
-      dialog: Observer(builder: (_) {
-        return PrintDialog(
-          onPrintPressed: (size, copies) {
-            navigator.pop();
-            onConfirmPrint(size, copies);
-          },
-          onCancel: () => navigator.pop(),
-        );
-      }),
+      dialog: Observer(
+        builder: (_) {
+          return PrintDialog(
+            onPrintPressed: (size, copies) {
+              navigator.pop();
+              onConfirmPrint(size, copies);
+            },
+            onCancel: () => navigator.pop(),
+          );
+        },
+      ),
     );
   }
 
@@ -88,20 +133,36 @@ class PhotoDetailsScreenController extends ScreenControllerBase<PhotoDetailsScre
       ..printText = localizations.photoDetailsScreenPrinting;
 
     // Get photo and print it.
-    final pdfData = await getImagePdfWithPageSize(await viewModel.file!.readAsBytes(), usingSize);
-    String jobName = viewModel.file != null ? path.basenameWithoutExtension(viewModel.file!.path) : "MomentoBooth Reprint";
+    final pdfData = await getImagePdfWithPageSize(
+      await viewModel.file!.readAsBytes(),
+      usingSize,
+    );
+    String jobName = viewModel.file != null
+        ? path.basenameWithoutExtension(viewModel.file!.path)
+        : "MomentoBooth Reprint";
 
     bool success = false;
     try {
-      await getIt<PrintingManager>().printPdf(jobName, pdfData, copies: copies, printSize: usingSize);
+      await getIt<PrintingManager>().printPdf(
+        jobName,
+        pdfData,
+        copies: copies,
+        printSize: usingSize,
+      );
       success = true;
     } catch (e, s) {
       logError("Failed to print photo", e, s);
     }
 
     successfulPrints += success ? copies : 0;
-    if (!success) unawaited(showUserDialog(dialog: const PrintingErrorDialog(), barrierDismissible: true));
+    if (!success) {
+      unawaited(
+        showUserDialog(
+          dialog: const PrintingErrorDialog(),
+          barrierDismissible: true,
+        ),
+      );
+    }
     resetPrint();
   }
-
 }

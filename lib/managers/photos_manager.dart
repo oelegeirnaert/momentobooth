@@ -12,11 +12,11 @@ import 'package:momento_booth/models/capture_state.dart';
 import 'package:momento_booth/models/constants.dart';
 import 'package:momento_booth/models/photo_capture.dart';
 import 'package:momento_booth/models/settings.dart';
-import 'package:momento_booth/repositories/immich_repository.dart';
 import 'package:momento_booth/utils/file_utils.dart';
 import 'package:momento_booth/utils/hardware.dart';
 import 'package:momento_booth/utils/logger.dart';
-import 'package:path/path.dart' show basename, join; // Without show mobx complains
+import 'package:path/path.dart'
+    show basename, join; // Without show mobx complains
 import 'package:path_provider/path_provider.dart';
 
 part 'photos_manager.g.dart';
@@ -25,7 +25,6 @@ class PhotosManager = PhotosManagerBase with _$PhotosManager;
 
 /// Class containing global state for photos in the app
 abstract class PhotosManagerBase with Store, Logger {
-
   @observable
   ObservableList<PhotoCapture> photos = ObservableList<PhotoCapture>();
 
@@ -39,7 +38,8 @@ abstract class PhotosManagerBase with Store, Logger {
   CaptureMode captureMode = CaptureMode.single;
 
   @computed
-  bool get showLiveViewBackground => photos.isEmpty && captureMode == CaptureMode.single;
+  bool get showLiveViewBackground =>
+      photos.isEmpty && captureMode == CaptureMode.single;
 
   Directory get outputDir => getIt<ProjectManager>().getOutputDir();
   int photoNumber = 0;
@@ -47,7 +47,8 @@ abstract class PhotosManagerBase with Store, Logger {
 
   final String baseName = "MomentoBooth-image";
 
-  Iterable<PhotoCapture> get chosenPhotos => chosen.map((choice) => photos[choice]);
+  Iterable<PhotoCapture> get chosenPhotos =>
+      chosen.map((choice) => photos[choice]);
 
   File? _lastPhotoFile;
   File? get lastPhotoFile => _lastPhotoFile;
@@ -70,8 +71,16 @@ abstract class PhotosManagerBase with Store, Logger {
       photoNumber = await findLastImageNumber() + 1;
       photoNumberChecked = true;
     }
-    final fileExtension = getIt<SettingsManager>().settings.output.exportFormat.name.toLowerCase();
-    final filePath = join(outputDir.path, '$baseName-${photoNumber.toString().padLeft(4, '0')}.$fileExtension');
+    final fileExtension = getIt<SettingsManager>()
+        .settings
+        .output
+        .exportFormat
+        .name
+        .toLowerCase();
+    final filePath = join(
+      outputDir.path,
+      '$baseName-${photoNumber.toString().padLeft(4, '0')}.$fileExtension',
+    );
     if (advance) photoNumber++;
     final f = await writeBytesToFileLocked(filePath, outputImage!);
     _lastPhotoFile = f;
@@ -82,7 +91,9 @@ abstract class PhotosManagerBase with Store, Logger {
   Future<int> findLastImageNumber() async {
     if (!outputDir.existsSync()) outputDir.createSync();
     final fileListBefore = await outputDir.list().toList();
-    final matchingFiles = fileListBefore.whereType<File>().where((file) => basename(file.path).startsWith(baseName));
+    final matchingFiles = fileListBefore.whereType<File>().where(
+      (file) => basename(file.path).startsWith(baseName),
+    );
 
     if (matchingFiles.isEmpty) return 0;
 
@@ -94,18 +105,27 @@ abstract class PhotosManagerBase with Store, Logger {
 
   Future<File> getOutputImageAsTempFile() async {
     final Directory tempDir = await getTemporaryDirectory();
-    final fileExtension = getIt<SettingsManager>().settings.output.exportFormat.name.toLowerCase();
+    final fileExtension = getIt<SettingsManager>()
+        .settings
+        .output
+        .exportFormat
+        .name
+        .toLowerCase();
     final filePath = join(tempDir.path, 'image.$fileExtension');
     return await writeBytesToFileLocked(filePath, outputImage!);
   }
 
-  Future<Uint8List> getOutputPDF(PrintSize printSize) => getImagePdfWithPageSize(outputImage!, printSize);
+  Future<Uint8List> getOutputPDF(PrintSize printSize) =>
+      getImagePdfWithPageSize(outputImage!, printSize);
 
-  PhotoCaptureMethod get capturer => switch (getIt<SettingsManager>().settings.hardware.captureMethod) {
-    CaptureMethod.liveViewSource => LiveViewStreamSnapshotCapturer(),
-    CaptureMethod.sonyImagingEdgeDesktop => SonyRemotePhotoCapture(getIt<SettingsManager>().settings.hardware.captureLocation),
-    CaptureMethod.gPhoto2 => getIt<LiveViewManager>().gPhoto2Camera!,
-  };
+  PhotoCaptureMethod get capturer =>
+      switch (getIt<SettingsManager>().settings.hardware.captureMethod) {
+        CaptureMethod.liveViewSource => LiveViewStreamSnapshotCapturer(),
+        CaptureMethod.sonyImagingEdgeDesktop => SonyRemotePhotoCapture(
+          getIt<SettingsManager>().settings.hardware.captureLocation,
+        ),
+        CaptureMethod.gPhoto2 => getIt<LiveViewManager>().gPhoto2Camera!,
+      };
 
   Future<PhotoCapture> directPhotoCapture() async {
     final capturer = this.capturer;
@@ -114,54 +134,66 @@ abstract class PhotosManagerBase with Store, Logger {
     return photos.last;
   }
 
-  void initiateDelayedPhotoCapture(VoidCallback onCaptureFinished, {int? captureDelayOverride}) {
-    final capturer = this.capturer
-    ..clearPreviousEvents();
+  void initiateDelayedPhotoCapture(
+    VoidCallback onCaptureFinished, {
+    int? captureDelayOverride,
+  }) {
+    final capturer = this.capturer..clearPreviousEvents();
 
-    int counterStart = captureDelayOverride ?? getIt<SettingsManager>().settings.captureDelaySeconds;
-    int autoFocusMsBeforeCapture = getIt<SettingsManager>().settings.hardware.gPhoto2AutoFocusMsBeforeCapture;
-    Duration photoDelay = Duration(seconds: counterStart) - capturer.captureDelay + flashStartDuration;
-    Duration autoFocusDelay = photoDelay - Duration(milliseconds: autoFocusMsBeforeCapture);
+    int counterStart =
+        captureDelayOverride ??
+        getIt<SettingsManager>().settings.captureDelaySeconds;
+    int autoFocusMsBeforeCapture = getIt<SettingsManager>()
+        .settings
+        .hardware
+        .gPhoto2AutoFocusMsBeforeCapture;
+    Duration photoDelay =
+        Duration(seconds: counterStart) -
+        capturer.captureDelay +
+        flashStartDuration;
+    Duration autoFocusDelay =
+        photoDelay - Duration(milliseconds: autoFocusMsBeforeCapture);
 
-    if (autoFocusMsBeforeCapture > 0 && autoFocusDelay > Duration.zero && capturer is GPhoto2Camera) {
+    if (autoFocusMsBeforeCapture > 0 &&
+        autoFocusDelay > Duration.zero &&
+        capturer is GPhoto2Camera) {
       Future.delayed(autoFocusDelay).then((_) => capturer.autoFocus());
     }
 
-    Future.delayed(photoDelay).then((_) => captureAndGetPhoto(capturer, onCaptureFinished));
+    Future.delayed(photoDelay)
+        .then((_) => captureAndGetPhoto(capturer, onCaptureFinished));
     getIt<MqttManager>().publishCaptureState(CaptureState.countdown);
   }
 
-  Future<void> captureAndGetPhoto(PhotoCaptureMethod capturer, VoidCallback onCaptureFinished) async {
+  Future<void> captureAndGetPhoto(
+    PhotoCaptureMethod capturer,
+    VoidCallback onCaptureFinished,
+  ) async {
     getIt<MqttManager>().publishCaptureState(CaptureState.capturing);
 
     try {
       final image = await capturer.captureAndGetPhoto();
       getIt<StatsManager>().addCapturedPhoto();
       photos.add(image);
-      if (getIt<SettingsManager>().settings.immichIntegration.enable) {
-        try {
-          await ImmichRepository().publish(image, getIt<SettingsManager>().settings.immichIntegration);
-        } catch (error, stackTrace) {
-          logWarning('Failed to publish captured photo to Immich', error, stackTrace);
-        }
-      }
     } catch (error) {
       logWarning(error);
-      final ByteData data = await rootBundle.load('assets/bitmap/capture-error.png');
-      photos.add(PhotoCapture(
-        data: data.buffer.asUint8List(),
-        filename: "capture-error.png",
-      ));
+      final ByteData data = await rootBundle.load(
+        'assets/bitmap/capture-error.png',
+      );
+      photos.add(
+        PhotoCapture(
+          data: data.buffer.asUint8List(),
+          filename: "capture-error.png",
+        ),
+      );
     } finally {
       onCaptureFinished();
       getIt<MqttManager>().publishCaptureState(CaptureState.idle);
     }
   }
-
 }
 
 enum CaptureMode {
-
   single(0, "Single"),
   collage(1, "Collage");
 
@@ -171,5 +203,4 @@ enum CaptureMode {
 
   // can use named parameters if you want
   const CaptureMode(this.value, this.name);
-
 }

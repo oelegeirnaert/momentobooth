@@ -107,6 +107,19 @@ class PhotoDetailsScreenView
               ),
             ),
           ),
+        if (viewModel.showImmichButton)
+          Flexible(
+            child: Center(
+              child: PhotoBoothButton.action(
+                onPressed: controller.onClickImmich,
+                child: AutoSizeTextAndIcon(
+                  text: 'Upload to Immich',
+                  leftIcon: LucideIcons.cloudUpload,
+                  autoSizeGroup: controller.actionButtonGroup,
+                ),
+              ),
+            ),
+          ),
         if (viewModel.showPrintButton)
           Flexible(
             child: Center(
