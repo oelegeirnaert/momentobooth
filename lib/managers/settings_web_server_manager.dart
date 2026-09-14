@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:momento_booth/main.dart';
+import 'package:momento_booth/managers/project_manager.dart';
 import 'package:momento_booth/managers/settings_manager.dart';
+import 'package:momento_booth/models/project_settings.dart';
 import 'package:momento_booth/models/settings.dart';
 import 'package:momento_booth/repositories/secrets/secure_storage_secrets_repository.dart';
 import 'package:momento_booth/repositories/secrets/secrets_repository.dart';
@@ -15,7 +17,8 @@ class SettingsWebServerManager {
   int port = defaultPort;
   bool get isRunning => _server != null;
 
-  Future<List<String>> get connectionUrls async => _detectConnectionUrls(port: port);
+  Future<List<String>> get connectionUrls async =>
+      _detectConnectionUrls(port: port);
 
   static List<String> localUrlsForAddresses(
     Iterable<InternetAddress> addresses, {
@@ -24,7 +27,10 @@ class SettingsWebServerManager {
     final urls = <String>{};
 
     for (final address in addresses) {
-      final isLoopback = address.isLoopback || address.address == '127.0.0.1' || address.address == '::1';
+      final isLoopback =
+          address.isLoopback ||
+          address.address == '127.0.0.1' ||
+          address.address == '::1';
       if (!isLoopback) {
         urls.add('http://${address.address}:$port');
       }
@@ -80,7 +86,8 @@ class SettingsWebServerManager {
       }
 
       final secretsRepository =
-          getIt.maybeGet<SecretsRepository>() ?? const SecureStorageSecretsRepository();
+          getIt.maybeGet<SecretsRepository>() ??
+          const SecureStorageSecretsRepository();
       final uriPath = request.uri.path;
 
       if (uriPath == '/' || uriPath == '/index.html') {
@@ -100,13 +107,52 @@ class SettingsWebServerManager {
       if (uriPath == '/settings') {
         switch (request.method) {
           case 'GET':
-            await _respondJson(request.response, getIt<SettingsManager>().settings.toJson());
+            await _respondJson(
+              request.response,
+              getIt<SettingsManager>().settings.toJson(),
+            );
             return;
           case 'PUT':
           case 'PATCH':
             final payload = await _readJsonBody(request);
-            final updatedSettings = applySettingsUpdate(getIt<SettingsManager>().settings, payload);
+            final updatedSettings = applySettingsUpdate(
+              getIt<SettingsManager>().settings,
+              payload,
+            );
             await getIt<SettingsManager>().updateAndSave(updatedSettings);
+            await _respondJson(request.response, updatedSettings.toJson());
+            return;
+          default:
+            request.response.statusCode = HttpStatus.methodNotAllowed;
+            await request.response.close();
+            return;
+        }
+      }
+
+      if (uriPath == '/project-settings') {
+        final projectManager = getIt<ProjectManager>();
+        if (!projectManager.isOpen) {
+          await _respondJson(request.response, {
+            'error': 'Open a project before editing project settings',
+          }, statusCode: HttpStatus.conflict);
+          return;
+        }
+
+        switch (request.method) {
+          case 'GET':
+            await _respondJson(
+              request.response,
+              projectManager.settings.toJson(),
+            );
+            return;
+          case 'PUT':
+          case 'PATCH':
+            final payload = await _readJsonBody(request);
+            final updatedSettings = applyProjectSettingsUpdate(
+              projectManager.settings,
+              payload,
+            );
+            await projectManager.updateAndSave(updatedSettings);
             await _respondJson(request.response, updatedSettings.toJson());
             return;
           default:
@@ -157,7 +203,10 @@ class SettingsWebServerManager {
                 return;
               }
               await secretsRepository.deleteSecret(candidate);
-              await _respondJson(request.response, {'key': candidate, 'value': ''});
+              await _respondJson(request.response, {
+                'key': candidate,
+                'value': '',
+              });
               return;
             }
             await secretsRepository.deleteSecret(key);
@@ -179,7 +228,10 @@ class SettingsWebServerManager {
 
         final resetSettings = Settings.withDefaults();
         await getIt<SettingsManager>().updateAndSave(resetSettings);
-        await _respondJson(request.response, getIt<SettingsManager>().settings.toJson());
+        await _respondJson(
+          request.response,
+          getIt<SettingsManager>().settings.toJson(),
+        );
         return;
       }
 
@@ -189,7 +241,12 @@ class SettingsWebServerManager {
       request.response.statusCode = HttpStatus.internalServerError;
       request.response.headers.contentType = ContentType.json;
       _writeCorsHeaders(request.response);
-      request.response.write(jsonEncode({'error': error.toString(), 'stackTrace': stackTrace.toString()}));
+      request.response.write(
+        jsonEncode({
+          'error': error.toString(),
+          'stackTrace': stackTrace.toString(),
+        }),
+      );
       await request.response.close();
     }
   }
@@ -206,8 +263,12 @@ class SettingsWebServerManager {
     return Map<String, dynamic>.from(decoded);
   }
 
-  Future<void> _respondJson(HttpResponse response, Map<String, dynamic> payload) async {
-    response.statusCode = HttpStatus.ok;
+  Future<void> _respondJson(
+    HttpResponse response,
+    Map<String, dynamic> payload, {
+    int statusCode = HttpStatus.ok,
+  }) async {
+    response.statusCode = statusCode;
     response.headers.contentType = ContentType.json;
     _writeCorsHeaders(response);
     response.write(jsonEncode(payload));
@@ -216,7 +277,10 @@ class SettingsWebServerManager {
 
   void _writeCorsHeaders(HttpResponse response) {
     response.headers.add('Access-Control-Allow-Origin', '*');
-    response.headers.add('Access-Control-Allow-Methods', 'GET, PUT, PATCH, POST, OPTIONS');
+    response.headers.add(
+      'Access-Control-Allow-Methods',
+      'GET, PUT, PATCH, POST, OPTIONS',
+    );
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type');
   }
 
@@ -360,6 +424,17 @@ class SettingsWebServerManager {
               <label for="enableWakelock">Keep display awake</label>
             </div>
           </div>
+        </div>
+
+        <div class="panel">
+          <h2>Project</h2>
+          <div class="grid">
+            <div class="field checkbox-row">
+              <input id="projectShowGallery" name="projectShowGallery" type="checkbox" />
+              <label for="projectShowGallery">Allow users to browse the gallery</label>
+            </div>
+          </div>
+          <p id="projectSettingsStatus">Project settings require an open project.</p>
         </div>
 
         <div class="panel">
@@ -674,6 +749,11 @@ class SettingsWebServerManager {
         rawSettingsJson.value = JSON.stringify(settings, null, 2);
       }
 
+      function loadProjectSettings(settings) {
+        document.getElementById('projectShowGallery').checked = settings.showGallery !== false;
+        document.getElementById('projectSettingsStatus').textContent = 'Project settings loaded';
+      }
+
       function collectSettings() {
         return {
           captureDelaySeconds: Number(document.getElementById('captureDelaySeconds').value),
@@ -740,6 +820,33 @@ class SettingsWebServerManager {
         };
       }
 
+      async function refreshProjectSettings() {
+        const response = await fetch('/project-settings');
+        if (response.status === 409) {
+          document.getElementById('projectSettingsStatus').textContent = 'Open a project in MomentoBooth to edit project settings.';
+          return;
+        }
+        if (!response.ok) throw new Error('Could not load project settings');
+        loadProjectSettings(await response.json());
+      }
+
+      async function saveProjectSettings() {
+        const response = await fetch('/project-settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            showGallery: document.getElementById('projectShowGallery').checked,
+          }),
+        });
+        if (response.status === 409) {
+          document.getElementById('projectSettingsStatus').textContent = 'Open a project in MomentoBooth to edit project settings.';
+          return;
+        }
+        const body = await response.text();
+        if (!response.ok) throw new Error(body || 'Could not save project settings');
+        loadProjectSettings(JSON.parse(body));
+      }
+
       async function saveSecret(key, value) {
         const normalized = (value ?? '').toString();
         const body = JSON.stringify({ key, value: normalized });
@@ -785,6 +892,8 @@ class SettingsWebServerManager {
           await saveSecret('mqtt_password', mqttPassword);
           await saveSecret('immich_api_key', immichApiKey);
 
+          await saveProjectSettings();
+
           loadForm(saved);
           setStatus('Settings saved successfully');
         } catch (error) {
@@ -829,19 +938,37 @@ class SettingsWebServerManager {
       });
 
       refreshSettings();
+      refreshProjectSettings().catch((error) => {
+        document.getElementById('projectSettingsStatus').textContent = 'Project settings unavailable: ' + error.message;
+      });
     </script>
   </body>
 </html>
 ''';
   }
 
-  static Settings applySettingsUpdate(Settings current, Map<String, dynamic> update) {
+  static Settings applySettingsUpdate(
+    Settings current,
+    Map<String, dynamic> update,
+  ) {
     final merged = Map<String, dynamic>.from(current.toJson());
     _deepMerge(merged, update);
     return Settings.fromJson(merged);
   }
 
-  static void _deepMerge(Map<String, dynamic> target, Map<String, dynamic> source) {
+  static ProjectSettings applyProjectSettingsUpdate(
+    ProjectSettings current,
+    Map<String, dynamic> update,
+  ) {
+    final merged = Map<String, dynamic>.from(current.toJson());
+    _deepMerge(merged, update);
+    return ProjectSettings.fromJson(merged);
+  }
+
+  static void _deepMerge(
+    Map<String, dynamic> target,
+    Map<String, dynamic> source,
+  ) {
     for (final entry in source.entries) {
       final key = entry.key;
       final value = entry.value;
