@@ -5,7 +5,6 @@ import 'package:momento_booth/managers/app_init_manager.dart';
 import 'package:momento_booth/views/onboarding_screen/components/wizard_page.dart';
 
 class InitializationPage extends StatelessWidget {
-
   const InitializationPage({super.key});
 
   @override
@@ -25,11 +24,10 @@ class InitializationPage extends StatelessWidget {
                   Text(getIt<AppInitManager>().status),
                 ],
               );
-            }
+            },
           ),
         ],
       ),
     );
   }
-
 }

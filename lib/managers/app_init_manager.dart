@@ -59,6 +59,7 @@ abstract class AppInitManagerBase with Store {
         ..registerManager(ProjectManager())
         ..registerManager(SfxManager())
         ..registerManager(SettingsManager())
+        ..registerSingleton(SettingsWebServerManager())
         ..registerManager(WindowManager())
         ..registerManager(LiveViewManager())
         ..registerManager(MqttManager())
@@ -98,6 +99,7 @@ abstract class AppInitManagerBase with Store {
       // /////////////////////// //
 
       await _setStatusAndRun('Initializing settings manager', getIt<SettingsManager>().initializeSafe);
+      await _setStatusAndRun('Starting browser settings server', getIt<SettingsWebServerManager>().initialize);
       await _setStatusAndRun('Creating paths', _createPathsSafe);
       await _setStatusAndRun('Initializing statistics manager', getIt<StatsManager>().initializeSafe);
 
