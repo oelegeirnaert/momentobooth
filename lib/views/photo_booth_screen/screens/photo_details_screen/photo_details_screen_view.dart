@@ -12,8 +12,12 @@ import 'package:momento_booth/views/photo_booth_screen/screens/components/text/p
 import 'package:momento_booth/views/photo_booth_screen/screens/photo_details_screen/photo_details_screen_controller.dart';
 import 'package:momento_booth/views/photo_booth_screen/screens/photo_details_screen/photo_details_screen_view_model.dart';
 
-class PhotoDetailsScreenView extends ScreenViewBase<PhotoDetailsScreenViewModel, PhotoDetailsScreenController> {
-
+class PhotoDetailsScreenView
+    extends
+        ScreenViewBase<
+          PhotoDetailsScreenViewModel,
+          PhotoDetailsScreenController
+        > {
   const PhotoDetailsScreenView({
     required super.viewModel,
     required super.controller,
@@ -28,7 +32,12 @@ class PhotoDetailsScreenView extends ScreenViewBase<PhotoDetailsScreenViewModel,
     );
 
     Widget aspectRatioWrapper = Observer(
-      builder: (_) => viewModel.imageSize != null ? AspectRatio(aspectRatio: viewModel.imageSize!.aspectRatio, child: image) : image,
+      builder: (_) => viewModel.imageSize != null
+          ? AspectRatio(
+              aspectRatio: viewModel.imageSize!.aspectRatio,
+              child: image,
+            )
+          : image,
     );
 
     return Stack(
@@ -37,7 +46,12 @@ class PhotoDetailsScreenView extends ScreenViewBase<PhotoDetailsScreenViewModel,
         Container(
           padding: const EdgeInsets.all(30),
           alignment: Alignment.center,
-          child: viewModel.imageSize != null ? context.theme.fullScreenPictureTheme.frameBuilder?.call(context, aspectRatioWrapper) : aspectRatioWrapper,
+          child: viewModel.imageSize != null
+              ? context.theme.fullScreenPictureTheme.frameBuilder?.call(
+                  context,
+                  aspectRatioWrapper,
+                )
+              : aspectRatioWrapper,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 30),
@@ -55,7 +69,9 @@ class PhotoDetailsScreenView extends ScreenViewBase<PhotoDetailsScreenViewModel,
       children: [
         Flexible(
           fit: FlexFit.tight,
-          child: Center(child: PhotoBoothTitle(localizations.photoDetailsScreenTitle)),
+          child: Center(
+            child: PhotoBoothTitle(localizations.photoDetailsScreenTitle),
+          ),
         ),
         Expanded(
           flex: 3,
@@ -63,7 +79,10 @@ class PhotoDetailsScreenView extends ScreenViewBase<PhotoDetailsScreenViewModel,
             alignment: Alignment.centerLeft,
             child: PhotoBoothButton.navigation(
               onPressed: controller.onClickPrev,
-              child: AutoSizeTextAndIcon(text: localizations.genericBackButton, leftIcon: LucideIcons.stepBack),
+              child: AutoSizeTextAndIcon(
+                text: localizations.genericBackButton,
+                leftIcon: LucideIcons.stepBack,
+              ),
             ),
           ),
         ),
@@ -88,22 +107,24 @@ class PhotoDetailsScreenView extends ScreenViewBase<PhotoDetailsScreenViewModel,
               ),
             ),
           ),
-        Flexible(
-          child: Center(
-            child: Observer(
-              builder: (context) => PhotoBoothButton.action(
-                onPressed: viewModel.printEnabled ? controller.onClickPrint : null,
-                child: AutoSizeTextAndIcon(
-                  text: viewModel.printText,
-                  leftIcon: LucideIcons.printer,
-                  autoSizeGroup: controller.actionButtonGroup,
+        if (viewModel.showPrintButton)
+          Flexible(
+            child: Center(
+              child: Observer(
+                builder: (context) => PhotoBoothButton.action(
+                  onPressed: viewModel.printEnabled
+                      ? controller.onClickPrint
+                      : null,
+                  child: AutoSizeTextAndIcon(
+                    text: viewModel.printText,
+                    leftIcon: LucideIcons.printer,
+                    autoSizeGroup: controller.actionButtonGroup,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
-
 }

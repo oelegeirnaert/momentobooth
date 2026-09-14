@@ -8,5 +8,8 @@
     "**/.dart_tool": true,
     ".flatpak/**": true,
     "_build/**": true
+  },
+  "chat.tools.terminal.autoApprove": {
+    "just": true
   }
 }

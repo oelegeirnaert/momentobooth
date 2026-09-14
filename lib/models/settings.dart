@@ -25,7 +25,6 @@ part 'settings.g.dart';
 
 @Freezed(fromJson: true, toJson: true)
 sealed class Settings with _$Settings implements TomlEncodableValue {
-
   const Settings._();
 
   const factory Settings({
@@ -35,23 +34,30 @@ sealed class Settings with _$Settings implements TomlEncodableValue {
     @Default(1.5) double collageAspectRatio,
     @Default(0) double collagePadding,
     @Default(true) bool enableWakelock,
-    @JsonKey(defaultValue: HardwareSettings.withDefaults) required HardwareSettings hardware,
-    @JsonKey(defaultValue: OutputSettings.withDefaults) required OutputSettings output,
+    @JsonKey(defaultValue: HardwareSettings.withDefaults)
+    required HardwareSettings hardware,
+    @JsonKey(defaultValue: OutputSettings.withDefaults)
+    required OutputSettings output,
     @JsonKey(defaultValue: UiSettings.withDefaults) required UiSettings ui,
-    @JsonKey(defaultValue: MqttIntegrationSettings.withDefaults) required MqttIntegrationSettings mqttIntegration,
-    @JsonKey(defaultValue: FaceRecognitionSettings.withDefaults) required FaceRecognitionSettings faceRecognition,
-    @JsonKey(defaultValue: DebugSettings.withDefaults) required DebugSettings debug,
+    @JsonKey(defaultValue: MqttIntegrationSettings.withDefaults)
+    required MqttIntegrationSettings mqttIntegration,
+    @JsonKey(defaultValue: FaceRecognitionSettings.withDefaults)
+    required FaceRecognitionSettings faceRecognition,
+    @JsonKey(defaultValue: ImmichIntegrationSettings.withDefaults)
+    required ImmichIntegrationSettings immichIntegration,
+    @JsonKey(defaultValue: DebugSettings.withDefaults)
+    required DebugSettings debug,
     @Default([]) List<ExternalSystemCheckSetting> externalSystemChecks,
     @Default(60) int externalSystemCheckIntervalSeconds,
   }) = _Settings;
 
   factory Settings.withDefaults() => Settings.fromJson({});
 
-  factory Settings.fromJson(Map<String, Object?> json) => _$SettingsFromJson(json);
+  factory Settings.fromJson(Map<String, Object?> json) =>
+      _$SettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }
 
 // ///////////////// //
@@ -59,8 +65,9 @@ sealed class Settings with _$Settings implements TomlEncodableValue {
 // ///////////////// //
 
 @Freezed(fromJson: true, toJson: true)
-sealed class HardwareSettings with _$HardwareSettings implements TomlEncodableValue {
-
+sealed class HardwareSettings
+    with _$HardwareSettings
+    implements TomlEncodableValue {
   const HardwareSettings._();
 
   const factory HardwareSettings({
@@ -72,23 +79,28 @@ sealed class HardwareSettings with _$HardwareSettings implements TomlEncodableVa
     @Default("") String liveViewWebcamId,
     @Default(CaptureMethod.liveViewSource) CaptureMethod captureMethod,
     @Default("") String gPhoto2CameraId,
-    @Default(GPhoto2SpecialHandling.none) GPhoto2SpecialHandling gPhoto2SpecialHandling,
+    @Default(GPhoto2SpecialHandling.none)
+    GPhoto2SpecialHandling gPhoto2SpecialHandling,
     @Default("") String gPhoto2CaptureTarget,
     @Default(false) bool gPhoto2DownloadExtraFiles,
     @Default(0) int gPhoto2AutoFocusMsBeforeCapture,
     @Default(100) int captureDelayGPhoto2,
     @Default(200) int captureDelaySony,
-    @JsonKey(defaultValue: _captureLocationFromJson) required String captureLocation,
-    @JsonKey(defaultValue: _captureLocationFromJson) required String serveFromDirectoryPath,
+    @JsonKey(defaultValue: _captureLocationFromJson)
+    required String captureLocation,
+    @JsonKey(defaultValue: _captureLocationFromJson)
+    required String serveFromDirectoryPath,
     @Default(true) bool saveCapturesToDisk,
-    @Default(PrintingImplementation.flutterPrinting) PrintingImplementation printingImplementation,
+    @Default(PrintingImplementation.flutterPrinting)
+    PrintingImplementation printingImplementation,
     @Default([]) List<String> flutterPrintingPrinterNames,
     @Default("http://localhost:631/") String cupsUri,
     @Default(false) bool cupsIgnoreTlsErrors,
     @Default("") String cupsUsername,
     @Default("") String cupsPassword,
     @Default([]) List<String> cupsPrinterQueues,
-    @JsonKey(defaultValue: PrintLayoutSettings.withDefaults) required PrintLayoutSettings printLayoutSettings,
+    @JsonKey(defaultValue: PrintLayoutSettings.withDefaults)
+    required PrintLayoutSettings printLayoutSettings,
     @Default(148) double pageHeight,
     @Default(100) double pageWidth,
     @Default(true) bool usePrinterSettings,
@@ -101,40 +113,68 @@ sealed class HardwareSettings with _$HardwareSettings implements TomlEncodableVa
 
   factory HardwareSettings.withDefaults() => HardwareSettings.fromJson({});
 
-  factory HardwareSettings.fromJson(Map<String, Object?> json) => _$HardwareSettingsFromJson(json);
+  factory HardwareSettings.fromJson(Map<String, Object?> json) =>
+      _$HardwareSettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }
 
 @Freezed(fromJson: true, toJson: true)
-sealed class PrintLayoutSettings with _$PrintLayoutSettings implements TomlEncodableValue {
+sealed class ImmichIntegrationSettings
+    with _$ImmichIntegrationSettings
+    implements TomlEncodableValue {
+  const ImmichIntegrationSettings._();
 
-  const PrintLayoutSettings._();
+  const factory ImmichIntegrationSettings({
+    @Default(false) bool enable,
+    @Default('') String serverUrl,
+    @Default('') String albumName,
+  }) = _ImmichIntegrationSettings;
 
-  const factory PrintLayoutSettings({
+  factory ImmichIntegrationSettings.withDefaults() =>
+      ImmichIntegrationSettings.fromJson({});
 
-    @JsonKey(defaultValue: MediaSettings.withDefaults) required MediaSettings mediaSizeNormal,
-    @JsonKey(defaultValue: MediaSettings.withDefaults) required MediaSettings mediaSizeSplit,
-    @JsonKey(defaultValue: MediaSettings.withDefaults) required MediaSettings mediaSizeSmall,
-    @JsonKey(defaultValue: GridSettings.withDefaults) required GridSettings gridSmall,
-    @JsonKey(defaultValue: MediaSettings.withDefaults) required MediaSettings mediaSizeTiny,
-    @JsonKey(defaultValue: GridSettings.withDefaults) required GridSettings gridTiny,
-  }) = _PrintLayoutSettings;
-
-  factory PrintLayoutSettings.withDefaults() => PrintLayoutSettings.fromJson({});
-
-  factory PrintLayoutSettings.fromJson(Map<String, Object?> json) => _$PrintLayoutSettingsFromJson(json);
+  factory ImmichIntegrationSettings.fromJson(Map<String, Object?> json) =>
+      _$ImmichIntegrationSettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
+}
 
+@Freezed(fromJson: true, toJson: true)
+sealed class PrintLayoutSettings
+    with _$PrintLayoutSettings
+    implements TomlEncodableValue {
+  const PrintLayoutSettings._();
+
+  const factory PrintLayoutSettings({
+    @JsonKey(defaultValue: MediaSettings.withDefaults)
+    required MediaSettings mediaSizeNormal,
+    @JsonKey(defaultValue: MediaSettings.withDefaults)
+    required MediaSettings mediaSizeSplit,
+    @JsonKey(defaultValue: MediaSettings.withDefaults)
+    required MediaSettings mediaSizeSmall,
+    @JsonKey(defaultValue: GridSettings.withDefaults)
+    required GridSettings gridSmall,
+    @JsonKey(defaultValue: MediaSettings.withDefaults)
+    required MediaSettings mediaSizeTiny,
+    @JsonKey(defaultValue: GridSettings.withDefaults)
+    required GridSettings gridTiny,
+  }) = _PrintLayoutSettings;
+
+  factory PrintLayoutSettings.withDefaults() =>
+      PrintLayoutSettings.fromJson({});
+
+  factory PrintLayoutSettings.fromJson(Map<String, Object?> json) =>
+      _$PrintLayoutSettingsFromJson(json);
+
+  @override
+  Map<String, dynamic> toTomlValue() => toJson();
 }
 
 @Freezed(fromJson: true, toJson: true)
 sealed class MediaSettings with _$MediaSettings implements TomlEncodableValue {
-
   const MediaSettings._();
 
   const factory MediaSettings({
@@ -145,16 +185,15 @@ sealed class MediaSettings with _$MediaSettings implements TomlEncodableValue {
 
   factory MediaSettings.withDefaults() => MediaSettings.fromJson({});
 
-  factory MediaSettings.fromJson(Map<String, Object?> json) => _$MediaSettingsFromJson(json);
+  factory MediaSettings.fromJson(Map<String, Object?> json) =>
+      _$MediaSettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }
 
 @Freezed(fromJson: true, toJson: true)
 sealed class GridSettings with _$GridSettings implements TomlEncodableValue {
-
   const GridSettings._();
 
   const factory GridSettings({
@@ -165,11 +204,11 @@ sealed class GridSettings with _$GridSettings implements TomlEncodableValue {
 
   factory GridSettings.withDefaults() => GridSettings.fromJson({});
 
-  factory GridSettings.fromJson(Map<String, Object?> json) => _$GridSettingsFromJson(json);
+  factory GridSettings.fromJson(Map<String, Object?> json) =>
+      _$GridSettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }
 
 // /////////////// //
@@ -177,8 +216,9 @@ sealed class GridSettings with _$GridSettings implements TomlEncodableValue {
 // /////////////// //
 
 @Freezed(fromJson: true, toJson: true)
-sealed class OutputSettings with _$OutputSettings implements TomlEncodableValue {
-
+sealed class OutputSettings
+    with _$OutputSettings
+    implements TomlEncodableValue {
   const OutputSettings._();
 
   const factory OutputSettings({
@@ -186,6 +226,8 @@ sealed class OutputSettings with _$OutputSettings implements TomlEncodableValue 
     @Default(4.0) double resolutionMultiplier,
     @Default(false) bool useFullFrame1PhotoLayout,
     @Default(ExportFormat.jpgFormat) ExportFormat exportFormat,
+    @Default(true) bool enablePrinting,
+    @Default(true) bool enableFirefoxSend,
     @Default("https://send.vis.ee/") String firefoxSendServerUrl,
     @Default(Duration(seconds: 5)) Duration firefoxSendControlCommandTimeout,
     @Default(Duration(seconds: 15)) Duration firefoxSendTransferTimeout,
@@ -193,11 +235,11 @@ sealed class OutputSettings with _$OutputSettings implements TomlEncodableValue 
 
   factory OutputSettings.withDefaults() => OutputSettings.fromJson({});
 
-  factory OutputSettings.fromJson(Map<String, Object?> json) => _$OutputSettingsFromJson(json);
+  factory OutputSettings.fromJson(Map<String, Object?> json) =>
+      _$OutputSettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }
 
 String _getHome() {
@@ -207,7 +249,9 @@ String _getHome() {
   } else if (Platform.isWindows) {
     return envVars['UserProfile']!;
   }
-  throw DefaultSettingRestoreException('Could not find the user\'s home folder: Platform unsupported');
+  throw DefaultSettingRestoreException(
+    'Could not find the user\'s home folder: Platform unsupported',
+  );
 }
 
 // /////////// //
@@ -216,7 +260,6 @@ String _getHome() {
 
 @Freezed(fromJson: true, toJson: true)
 sealed class UiSettings with _$UiSettings implements TomlEncodableValue {
-
   const UiSettings._();
 
   const factory UiSettings({
@@ -228,25 +271,28 @@ sealed class UiSettings with _$UiSettings implements TomlEncodableValue {
     @Default("") String clickSfxFile,
     @Default("") String shareScreenSfxFile,
     @Default(false) bool allowScrollGestureWithMouse,
-    @Default(ScreenTransitionAnimation.fadeAndScale) ScreenTransitionAnimation screenTransitionAnimation,
+    @Default(ScreenTransitionAnimation.fadeAndScale)
+    ScreenTransitionAnimation screenTransitionAnimation,
     @Default(BackgroundBlur.textureBlur) BackgroundBlur backgroundBlur,
-    @Default(FilterQuality.low) FilterQuality screenTransitionAnimationFilterQuality,
+    @Default(FilterQuality.low)
+    FilterQuality screenTransitionAnimationFilterQuality,
     @Default(FilterQuality.medium) FilterQuality liveViewFilterQuality,
     @Default(false) bool showSettingsButton,
   }) = _UiSettings;
 
   factory UiSettings.withDefaults() => UiSettings.fromJson({});
 
-  factory UiSettings.fromJson(Map<String, Object?> json) => _$UiSettingsFromJson(json);
+  factory UiSettings.fromJson(Map<String, Object?> json) =>
+      _$UiSettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }
 
 @Freezed(fromJson: true, toJson: true)
-sealed class LottieAnimationSettings with _$LottieAnimationSettings implements TomlEncodableValue {
-
+sealed class LottieAnimationSettings
+    with _$LottieAnimationSettings
+    implements TomlEncodableValue {
   const LottieAnimationSettings._();
 
   const factory LottieAnimationSettings({
@@ -261,11 +307,11 @@ sealed class LottieAnimationSettings with _$LottieAnimationSettings implements T
     @Default(0) double rotation,
   }) = _LottieAnimationSettings;
 
-  factory LottieAnimationSettings.fromJson(Map<String, Object?> json) => _$LottieAnimationSettingsFromJson(json);
+  factory LottieAnimationSettings.fromJson(Map<String, Object?> json) =>
+      _$LottieAnimationSettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }
 
 // //////////////////// //
@@ -273,8 +319,9 @@ sealed class LottieAnimationSettings with _$LottieAnimationSettings implements T
 // //////////////////// //
 
 @Freezed(fromJson: true, toJson: true)
-sealed class MqttIntegrationSettings with _$MqttIntegrationSettings implements TomlEncodableValue {
-
+sealed class MqttIntegrationSettings
+    with _$MqttIntegrationSettings
+    implements TomlEncodableValue {
   const MqttIntegrationSettings._();
 
   const factory MqttIntegrationSettings({
@@ -289,21 +336,24 @@ sealed class MqttIntegrationSettings with _$MqttIntegrationSettings implements T
     @Default("momentobooth") String rootTopic,
     @Default(false) bool enableHomeAssistantDiscovery,
     @Default("homeassistant") String homeAssistantDiscoveryTopicPrefix,
-    @JsonKey(defaultValue: _homeAssistantComponentIdFromJson) required String homeAssistantComponentId,
+    @JsonKey(defaultValue: _homeAssistantComponentIdFromJson)
+    required String homeAssistantComponentId,
   }) = _MqttIntegrationSettings;
 
-  factory MqttIntegrationSettings.withDefaults() => MqttIntegrationSettings.fromJson({});
+  factory MqttIntegrationSettings.withDefaults() =>
+      MqttIntegrationSettings.fromJson({});
 
-  factory MqttIntegrationSettings.fromJson(Map<String, Object?> json) => _$MqttIntegrationSettingsFromJson(json);
+  factory MqttIntegrationSettings.fromJson(Map<String, Object?> json) =>
+      _$MqttIntegrationSettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }
 
 @Freezed(fromJson: true, toJson: true)
-sealed class FaceRecognitionSettings with _$FaceRecognitionSettings implements TomlEncodableValue {
-
+sealed class FaceRecognitionSettings
+    with _$FaceRecognitionSettings
+    implements TomlEncodableValue {
   const FaceRecognitionSettings._();
 
   const factory FaceRecognitionSettings({
@@ -311,13 +361,14 @@ sealed class FaceRecognitionSettings with _$FaceRecognitionSettings implements T
     @Default('http://localhost:3232/') String serverUrl,
   }) = _FaceRecognitionSettings;
 
-  factory FaceRecognitionSettings.withDefaults() => FaceRecognitionSettings.fromJson({});
+  factory FaceRecognitionSettings.withDefaults() =>
+      FaceRecognitionSettings.fromJson({});
 
-  factory FaceRecognitionSettings.fromJson(Map<String, Object?> json) => _$FaceRecognitionSettingsFromJson(json);
+  factory FaceRecognitionSettings.fromJson(Map<String, Object?> json) =>
+      _$FaceRecognitionSettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }
 
 // ///////////////////// //
@@ -325,25 +376,28 @@ sealed class FaceRecognitionSettings with _$FaceRecognitionSettings implements T
 // ///////////////////// //
 
 @Freezed(fromJson: true, toJson: true)
-sealed class ExternalSystemCheckSetting with _$ExternalSystemCheckSetting implements TomlEncodableValue {
-
+sealed class ExternalSystemCheckSetting
+    with _$ExternalSystemCheckSetting
+    implements TomlEncodableValue {
   const ExternalSystemCheckSetting._();
 
   const factory ExternalSystemCheckSetting({
     required String name,
     required String address,
     required ExternalSystemCheckType type,
-    @Default(ExternalSystemCheckSeverity.warning) ExternalSystemCheckSeverity severity,
+    @Default(ExternalSystemCheckSeverity.warning)
+    ExternalSystemCheckSeverity severity,
     @Default(true) bool enabled,
   }) = _ExternalSystemCheckSetting;
 
-  factory ExternalSystemCheckSetting.withDefaults() => ExternalSystemCheckSetting.fromJson({});
+  factory ExternalSystemCheckSetting.withDefaults() =>
+      ExternalSystemCheckSetting.fromJson({});
 
-  factory ExternalSystemCheckSetting.fromJson(Map<String, Object?> json) => _$ExternalSystemCheckSettingFromJson(json);
+  factory ExternalSystemCheckSetting.fromJson(Map<String, Object?> json) =>
+      _$ExternalSystemCheckSettingFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }
 
 // ////////////// //
@@ -352,7 +406,6 @@ sealed class ExternalSystemCheckSetting with _$ExternalSystemCheckSetting implem
 
 @Freezed(fromJson: true, toJson: true)
 sealed class DebugSettings with _$DebugSettings implements TomlEncodableValue {
-
   const DebugSettings._();
 
   const factory DebugSettings({
@@ -364,27 +417,28 @@ sealed class DebugSettings with _$DebugSettings implements TomlEncodableValue {
 
   factory DebugSettings.withDefaults() => DebugSettings.fromJson({});
 
-  factory DebugSettings.fromJson(Map<String, Object?> json) => _$DebugSettingsFromJson(json);
+  factory DebugSettings.fromJson(Map<String, Object?> json) =>
+      _$DebugSettingsFromJson(json);
 
   @override
   Map<String, dynamic> toTomlValue() => toJson();
-
 }
 
 // /////////////// //
 // Default helpers //
 // /////////////// //
 
-String _captureLocationFromJson() => join(_getHome(), "Pictures", "MomentoBooth", "Captures");
+String _captureLocationFromJson() =>
+    join(_getHome(), "Pictures", "MomentoBooth", "Captures");
 String _clientIdFromJson() => 'momentobooth-photobooth-${getRandomString()}';
-String _homeAssistantComponentIdFromJson() => 'momentobooth-${getRandomString()}';
+String _homeAssistantComponentIdFromJson() =>
+    'momentobooth-${getRandomString()}';
 
 // ////////// //
 // Converters //
 // ////////// //
 
 class ColorColorCodeConverter implements JsonConverter<Color, String> {
-
   const ColorColorCodeConverter();
 
   @override
@@ -394,10 +448,21 @@ class ColorColorCodeConverter implements JsonConverter<Color, String> {
 
   @override
   String toJson(Color color) {
-    String r = (color.r * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
-    String g = (color.g * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
-    String b = (color.b * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
+    String r = (color.r * 255)
+        .round()
+        .toRadixString(16)
+        .padLeft(2, '0')
+        .toUpperCase();
+    String g = (color.g * 255)
+        .round()
+        .toRadixString(16)
+        .padLeft(2, '0')
+        .toUpperCase();
+    String b = (color.b * 255)
+        .round()
+        .toRadixString(16)
+        .padLeft(2, '0')
+        .toUpperCase();
     return '#$r$g$b';
   }
-
 }

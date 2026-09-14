@@ -1,18 +1,36 @@
 part of '../settings_overlay_view.dart';
 
-Widget _getOutputSettings(SettingsOverlayViewModel viewModel, SettingsOverlayController controller) {
+Widget _getOutputSettings(
+  SettingsOverlayViewModel viewModel,
+  SettingsOverlayController controller,
+) {
   return SettingsListPage(
     title: "Output",
     blocks: [
       SettingsSection(
         title: "Local",
         settings: [
-          Text("Collages are saved to the Output folder of your project.")
+          Text("Collages are saved to the Output folder of your project."),
         ],
       ),
       SettingsSection(
         title: "Share using internet",
         settings: [
+          SettingsToggleTile(
+            icon: LucideIcons.printer,
+            title: "Enable printing",
+            subtitle:
+                "If enabled, the print button is shown on the share screens.",
+            value: () => viewModel.enablePrintingSetting,
+            onChanged: controller.onEnablePrintingChanged,
+          ),
+          SettingsToggleTile(
+            icon: LucideIcons.share2,
+            title: "Enable Firefox Send",
+            subtitle: "If enabled, the QR button is shown so users can download their photo.",
+            value: () => viewModel.enableFirefoxSendSetting,
+            onChanged: controller.onEnableFirefoxSendChanged,
+          ),
           SettingsTextEditTile(
             icon: LucideIcons.globe,
             title: "Firefox Send URL",
@@ -25,12 +43,14 @@ Widget _getOutputSettings(SettingsOverlayViewModel viewModel, SettingsOverlayCon
             title: "Firefox Send control command timeout",
             subtitle: "The duration (in seconds) a control command is allowed to take",
             value: () => viewModel.firefoxSendControlCommandTimeoutSetting,
-            onFinishedEditing: controller.onFirefoxSendControlCommandTimeoutChanged,
+            onFinishedEditing:
+                controller.onFirefoxSendControlCommandTimeoutChanged,
           ),
           SettingsNumberEditTile(
             icon: LucideIcons.timer,
             title: "Firefox Send transfer timeout",
-            subtitle: "The duration (in seconds) a picture upload is allowed to take",
+            subtitle:
+                "The duration (in seconds) a picture upload is allowed to take",
             value: () => viewModel.firefoxSendTransferTimeoutSetting,
             onFinishedEditing: controller.onFirefoxSendTransferTimeoutChanged,
           ),
@@ -64,7 +84,9 @@ Widget _getOutputSettings(SettingsOverlayViewModel viewModel, SettingsOverlayCon
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Text("→ Output resolution based on aspect ratio (${viewModel.collageAspectRatioSetting}) and padding (${viewModel.collagePaddingSetting}) and multiplier will be ${viewModel.outputResHeightExcl.round()}×${viewModel.outputResWidthExcl.round()} without and ${viewModel.outputResHeightIncl.round()}×${viewModel.outputResWidthIncl.round()} with padding"),
+            child: Text(
+              "→ Output resolution based on aspect ratio (${viewModel.collageAspectRatioSetting}) and padding (${viewModel.collagePaddingSetting}) and multiplier will be ${viewModel.outputResHeightExcl.round()}×${viewModel.outputResWidthExcl.round()} without and ${viewModel.outputResHeightIncl.round()}×${viewModel.outputResWidthIncl.round()} with padding",
+            ),
           ),
         ],
       ),

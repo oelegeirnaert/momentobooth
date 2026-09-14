@@ -12,6 +12,7 @@ import 'package:momento_booth/models/capture_state.dart';
 import 'package:momento_booth/models/constants.dart';
 import 'package:momento_booth/models/photo_capture.dart';
 import 'package:momento_booth/models/settings.dart';
+import 'package:momento_booth/repositories/immich_repository.dart';
 import 'package:momento_booth/utils/file_utils.dart';
 import 'package:momento_booth/utils/hardware.dart';
 import 'package:momento_booth/utils/logger.dart';
@@ -137,6 +138,13 @@ abstract class PhotosManagerBase with Store, Logger {
       final image = await capturer.captureAndGetPhoto();
       getIt<StatsManager>().addCapturedPhoto();
       photos.add(image);
+      if (getIt<SettingsManager>().settings.immichIntegration.enable) {
+        try {
+          await ImmichRepository().publish(image, getIt<SettingsManager>().settings.immichIntegration);
+        } catch (error, stackTrace) {
+          logWarning('Failed to publish captured photo to Immich', error, stackTrace);
+        }
+      }
     } catch (error) {
       logWarning(error);
       final ByteData data = await rootBundle.load('assets/bitmap/capture-error.png');

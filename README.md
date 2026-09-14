@@ -40,7 +40,13 @@
 * **Photo printing**
   * Lots of settings included to size and position your print well
   * Support for native printing method and dispatch to CUPS server
+  * Can be toggled off from the Output settings when you do not want a print button on the share screens
 * **Photo sharing using QR code** with [`ffsend`](https://github.com/timvisee/ffsend)
+  * The QR button can also be disabled from the Output settings when you only want local capture or a different sharing flow
+* **Photo uploads to Immich**
+  * Automatically upload captures to a configured Immich server
+  * Creates the configured album when it does not exist yet
+  * Publishes new photos directly into that album
 * **Theming with collage template images** (background and foreground)
 * **Rich live view and capture options**
   * Select device with 1 click or select custom options & combinations

@@ -16,3 +16,4 @@ The settings panel can be opened using the menubar or by pressing `Ctrl+S`. When
  * [Subsystem status](settings_subsystem.md)
  * [Debug](settings_debug.md)
  * [Log](settings_log.md)
+The MQTT settings tab also contains the Immich publishing section, which can automatically upload each captured photo into a named album on your Immich server.

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:file_selector/file_selector.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:momento_booth/hardware_control/gphoto2_camera.dart';
 import 'package:momento_booth/hardware_control/live_view_streaming/nokhwa_camera.dart';
 import 'package:momento_booth/main.dart';
@@ -13,6 +14,7 @@ import 'package:momento_booth/managers/sfx_manager.dart';
 import 'package:momento_booth/models/maker_note_data.dart';
 import 'package:momento_booth/models/project_settings.dart';
 import 'package:momento_booth/models/settings.dart';
+import 'package:momento_booth/repositories/secrets/secrets_repository.dart';
 import 'package:momento_booth/src/rust/hardware_control/live_view/gphoto2.dart';
 import 'package:momento_booth/src/rust/hardware_control/live_view/nokhwa.dart';
 import 'package:momento_booth/src/rust/utils/ipp_client.dart';
@@ -21,60 +23,126 @@ import 'package:momento_booth/utils/file_utils.dart';
 import 'package:momento_booth/views/base/screen_controller_base.dart';
 import 'package:momento_booth/views/settings_overlay/settings_overlay_view_model.dart';
 
-class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayViewModel> {
-
+class SettingsOverlayController
+    extends ScreenControllerBase<SettingsOverlayViewModel> {
   final comboboxKey = GlobalKey<ComboBoxState>(debugLabel: 'Combobox Key');
 
   TextEditingController? _clickSfxFileController;
-  TextEditingController get clickSfxFileController => _clickSfxFileController ??= TextEditingController(text: viewModel.clickSfxFileSetting);
+  TextEditingController get clickSfxFileController =>
+      _clickSfxFileController ??= TextEditingController(
+        text: viewModel.clickSfxFileSetting,
+      );
 
   TextEditingController? _shareScreenSfxFileController;
-  TextEditingController get shareScreenSfxFileController => _shareScreenSfxFileController ??= TextEditingController(text: viewModel.shareScreenSfxFileSetting);
+  TextEditingController get shareScreenSfxFileController =>
+      _shareScreenSfxFileController ??= TextEditingController(
+        text: viewModel.shareScreenSfxFileSetting,
+      );
 
   TextEditingController? _captureLocationController;
-  TextEditingController get captureLocationController => _captureLocationController ??= TextEditingController(text: viewModel.captureLocationSetting);
+  TextEditingController get captureLocationController =>
+      _captureLocationController ??= TextEditingController(
+        text: viewModel.captureLocationSetting,
+      );
 
   TextEditingController? _serveFromDirectoryController;
-  TextEditingController get serveFromDirectoryController => _serveFromDirectoryController ??= TextEditingController(text: viewModel.serveFromDirectoryPathSetting);
+  TextEditingController get serveFromDirectoryController =>
+      _serveFromDirectoryController ??= TextEditingController(
+        text: viewModel.serveFromDirectoryPathSetting,
+      );
 
   TextEditingController? _firefoxSendServerUrlController;
-  TextEditingController get firefoxSendServerUrlController => _firefoxSendServerUrlController ??= TextEditingController(text: viewModel.firefoxSendServerUrlSetting);
+  TextEditingController get firefoxSendServerUrlController =>
+      _firefoxSendServerUrlController ??= TextEditingController(
+        text: viewModel.firefoxSendServerUrlSetting,
+      );
 
   TextEditingController? _introScreenTouchToStartOverrideTextController;
-  TextEditingController get introScreenTouchToStartOverrideTextController => _introScreenTouchToStartOverrideTextController ??= TextEditingController(text: viewModel.introScreenTouchToStartOverrideTextSetting);
+  TextEditingController get introScreenTouchToStartOverrideTextController =>
+      _introScreenTouchToStartOverrideTextController ??= TextEditingController(
+        text: viewModel.introScreenTouchToStartOverrideTextSetting,
+      );
 
   TextEditingController? _gPhoto2CaptureTargetController;
-  TextEditingController get gPhoto2CaptureTargetController => _gPhoto2CaptureTargetController ??= TextEditingController(text: viewModel.gPhoto2CaptureTargetSetting);
+  TextEditingController get gPhoto2CaptureTargetController =>
+      _gPhoto2CaptureTargetController ??= TextEditingController(
+        text: viewModel.gPhoto2CaptureTargetSetting,
+      );
 
   TextEditingController? _mqttIntegrationHostController;
-  TextEditingController get mqttIntegrationHostController => _mqttIntegrationHostController ??= TextEditingController(text: viewModel.mqttIntegrationHostSetting);
+  TextEditingController get mqttIntegrationHostController =>
+      _mqttIntegrationHostController ??= TextEditingController(
+        text: viewModel.mqttIntegrationHostSetting,
+      );
 
   TextEditingController? _mqttIntegrationUsernameController;
-  TextEditingController get mqttIntegrationUsernameController => _mqttIntegrationUsernameController ??= TextEditingController(text: viewModel.mqttIntegrationUsernameSetting);
+  TextEditingController get mqttIntegrationUsernameController =>
+      _mqttIntegrationUsernameController ??= TextEditingController(
+        text: viewModel.mqttIntegrationUsernameSetting,
+      );
 
   TextEditingController? _mqttIntegratonClientIdController;
-  TextEditingController get mqttIntegrationClientIdController => _mqttIntegratonClientIdController ??= TextEditingController(text: viewModel.mqttIntegrationClientIdSetting);
+  TextEditingController get mqttIntegrationClientIdController =>
+      _mqttIntegratonClientIdController ??= TextEditingController(
+        text: viewModel.mqttIntegrationClientIdSetting,
+      );
 
   TextEditingController? _mqttIntegrationRootTopicController;
-  TextEditingController get mqttIntegrationRootTopicController => _mqttIntegrationRootTopicController ??= TextEditingController(text: viewModel.mqttIntegrationRootTopicSetting);
+  TextEditingController get mqttIntegrationRootTopicController =>
+      _mqttIntegrationRootTopicController ??= TextEditingController(
+        text: viewModel.mqttIntegrationRootTopicSetting,
+      );
 
-  TextEditingController? _mqttIntegrationHomeAssistantDiscoveryTopicPrefixController;
-  TextEditingController get mqttIntegrationHomeAssistantDiscoveryTopicPrefixController => _mqttIntegrationHomeAssistantDiscoveryTopicPrefixController ??= TextEditingController(text: viewModel.mqttIntegrationHomeAssistantDiscoveryTopicPrefixSetting);
+  TextEditingController?
+  _mqttIntegrationHomeAssistantDiscoveryTopicPrefixController;
+  TextEditingController
+  get mqttIntegrationHomeAssistantDiscoveryTopicPrefixController =>
+      _mqttIntegrationHomeAssistantDiscoveryTopicPrefixController ??=
+          TextEditingController(
+            text: viewModel
+                .mqttIntegrationHomeAssistantDiscoveryTopicPrefixSetting,
+          );
 
   TextEditingController? _mqttIntegrationHomeAssistantComponentIdController;
-  TextEditingController get mqttIntegrationHomeAssistantComponentIdController => _mqttIntegrationHomeAssistantComponentIdController ??= TextEditingController(text: viewModel.mqttIntegrationHomeAssistantComponentIdSetting);
+  TextEditingController get mqttIntegrationHomeAssistantComponentIdController =>
+      _mqttIntegrationHomeAssistantComponentIdController ??=
+          TextEditingController(
+            text: viewModel.mqttIntegrationHomeAssistantComponentIdSetting,
+          );
+
+  TextEditingController? _immichIntegrationServerUrlController;
+  TextEditingController get immichIntegrationServerUrlController =>
+      _immichIntegrationServerUrlController ??= TextEditingController(
+        text: viewModel.immichIntegrationServerUrlSetting,
+      );
+
+  TextEditingController? _immichIntegrationAlbumNameController;
+  TextEditingController get immichIntegrationAlbumNameController =>
+      _immichIntegrationAlbumNameController ??= TextEditingController(
+        text: viewModel.immichIntegrationAlbumNameSetting,
+      );
 
   TextEditingController? _cupsUriController;
-  TextEditingController get cupsUriController => _cupsUriController ??= TextEditingController(text: viewModel.cupsUriSetting);
+  TextEditingController get cupsUriController => _cupsUriController ??=
+      TextEditingController(text: viewModel.cupsUriSetting);
 
   TextEditingController? _cupsUsernameController;
-  TextEditingController get cupsUsernameController => _cupsUsernameController ??= TextEditingController(text: viewModel.cupsUsernameSetting);
+  TextEditingController get cupsUsernameController =>
+      _cupsUsernameController ??= TextEditingController(
+        text: viewModel.cupsUsernameSetting,
+      );
 
   TextEditingController? _cupsPasswordController;
-  TextEditingController get cupsPasswordController => _cupsPasswordController ??= TextEditingController(text: viewModel.cupsPasswordSetting);
+  TextEditingController get cupsPasswordController =>
+      _cupsPasswordController ??= TextEditingController(
+        text: viewModel.cupsPasswordSetting,
+      );
 
   TextEditingController? _faceRecognitionServerUrlController;
-  TextEditingController get faceRecognitionServerUrlController => _faceRecognitionServerUrlController ??= TextEditingController(text: viewModel.faceRecognitionServerUrlSetting);
+  TextEditingController get faceRecognitionServerUrlController =>
+      _faceRecognitionServerUrlController ??= TextEditingController(
+        text: viewModel.faceRecognitionServerUrlSetting,
+      );
 
   // Initialization/Deinitialization
 
@@ -92,12 +160,15 @@ class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayView
     final pixelRatio = viewModel.resolutionMultiplier;
     final format = viewModel.exportFormat;
     final jpgQuality = viewModel.jpgQuality;
-    getIt<PhotosManager>().outputImage = await viewModel.collageKey.currentState!.getCollageImage(
-      createdByMode: CreatedByMode.manual,
-      pixelRatio: pixelRatio,
-      format: format,
-      jpgQuality: jpgQuality,
-    );
+    getIt<PhotosManager>().outputImage = await viewModel
+        .collageKey
+        .currentState!
+        .getCollageImage(
+          createdByMode: CreatedByMode.manual,
+          pixelRatio: pixelRatio,
+          format: format,
+          jpgQuality: jpgQuality,
+        );
     logDebug('captureCollage took ${stopwatch.elapsed}');
 
     File? file = await getIt<PhotosManager>().writeOutput(advance: true);
@@ -106,42 +177,63 @@ class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayView
 
   void setImagingWebcam(NokhwaCameraInfo camera) {
     viewModel.showCustomImagingSettings = false;
-    viewModel.updateSettings((settings) => settings.copyWith.hardware(
-      liveViewMethod: LiveViewMethod.webcam,
-      captureMethod: CaptureMethod.liveViewSource,
-      liveViewWebcamId: NokhwaCamera.fromCameraInfo(camera).id
-    ));
+    viewModel.updateSettings(
+      (settings) => settings.copyWith.hardware(
+        liveViewMethod: LiveViewMethod.webcam,
+        captureMethod: CaptureMethod.liveViewSource,
+        liveViewWebcamId: NokhwaCamera.fromCameraInfo(camera).id,
+      ),
+    );
   }
 
   void setImagingGPhoto2(GPhoto2CameraInfo camera) {
     viewModel.showCustomImagingSettings = false;
-    viewModel.updateSettings((settings) => settings.copyWith.hardware(
-      liveViewMethod: LiveViewMethod.gphoto2,
-      captureMethod: CaptureMethod.gPhoto2,
-      gPhoto2CameraId: GPhoto2Camera.fromCameraInfo(camera).id
-    ));
+    viewModel.updateSettings(
+      (settings) => settings.copyWith.hardware(
+        liveViewMethod: LiveViewMethod.gphoto2,
+        captureMethod: CaptureMethod.gPhoto2,
+        gPhoto2CameraId: GPhoto2Camera.fromCameraInfo(camera).id,
+      ),
+    );
   }
 
   void setImagingStaticImage() {
     viewModel.showCustomImagingSettings = false;
-    viewModel.updateSettings((settings) => settings.copyWith.hardware(liveViewMethod: LiveViewMethod.debugStaticImage, captureMethod: CaptureMethod.liveViewSource));
+    viewModel.updateSettings(
+      (settings) => settings.copyWith.hardware(
+        liveViewMethod: LiveViewMethod.debugStaticImage,
+        captureMethod: CaptureMethod.liveViewSource,
+      ),
+    );
   }
 
   Future<void> setImagingServeFromDirectory() async {
     viewModel.showCustomImagingSettings = false;
 
     // Open directory picker after setting the live view method, so that the selected directory gets immediately used for the live view source.
-    String? selectedDirectory = await getDirectoryPath(initialDirectory: serveFromDirectoryController.text);
+    String? selectedDirectory = await getDirectoryPath(
+      initialDirectory: serveFromDirectoryController.text,
+    );
     if (selectedDirectory != null) {
       onServeFromDirectoryPathChanged(selectedDirectory);
       serveFromDirectoryController.text = selectedDirectory;
     }
-    await viewModel.updateSettings((settings) => settings.copyWith.hardware(liveViewMethod: LiveViewMethod.serveFromDirectory, captureMethod: CaptureMethod.liveViewSource));
+    await viewModel.updateSettings(
+      (settings) => settings.copyWith.hardware(
+        liveViewMethod: LiveViewMethod.serveFromDirectory,
+        captureMethod: CaptureMethod.liveViewSource,
+      ),
+    );
   }
 
   void setImagingStaticNoise() {
     viewModel.showCustomImagingSettings = false;
-    viewModel.updateSettings((settings) => settings.copyWith.hardware(liveViewMethod: LiveViewMethod.debugNoise, captureMethod: CaptureMethod.liveViewSource));
+    viewModel.updateSettings(
+      (settings) => settings.copyWith.hardware(
+        liveViewMethod: LiveViewMethod.debugNoise,
+        captureMethod: CaptureMethod.liveViewSource,
+      ),
+    );
   }
 
   void onCustomImagingOptionsSelected() {
@@ -150,195 +242,295 @@ class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayView
 
   void onUiThemeChanged(UiTheme? uiTheme) {
     if (uiTheme != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(uiTheme: uiTheme));
+      viewModel.updateProjectSettings(
+        (settings) => settings.copyWith(uiTheme: uiTheme),
+      );
     }
   }
 
   void onCaptureDelaySecondsChanged(int? captureDelaySeconds) {
     if (captureDelaySeconds != null) {
-      viewModel.updateSettings((settings) => settings.copyWith(captureDelaySeconds: captureDelaySeconds));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith(captureDelaySeconds: captureDelaySeconds),
+      );
     }
   }
 
   void onLoadLastProjectChanged(bool? loadLastProject) {
     if (loadLastProject != null) {
-      viewModel.updateSettings((settings) => settings.copyWith(loadLastProject: loadLastProject));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith(loadLastProject: loadLastProject),
+      );
     }
   }
 
   void onCollageAspectRatioChanged(double? collageAspectRatio) {
     if (collageAspectRatio != null) {
-      viewModel.updateSettings((settings) => settings.copyWith(collageAspectRatio: collageAspectRatio));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith(collageAspectRatio: collageAspectRatio),
+      );
     }
   }
 
   void onCollagePaddingChanged(double? collagePadding) {
     if (collagePadding != null) {
-      viewModel.updateSettings((settings) => settings.copyWith(collagePadding: collagePadding));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith(collagePadding: collagePadding),
+      );
     }
   }
 
   void onEnableSingleCaptureChanged(bool? enableSingleCapture) {
     if (enableSingleCapture != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(enableSingleCapture: enableSingleCapture));
+      viewModel.updateProjectSettings(
+        (settings) =>
+            settings.copyWith(enableSingleCapture: enableSingleCapture),
+      );
     }
   }
 
   void onSinglePhotoIsCollageChanged(bool? singlePhotoIsCollage) {
     if (singlePhotoIsCollage != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(singlePhotoIsCollage: singlePhotoIsCollage));
+      viewModel.updateProjectSettings(
+        (settings) =>
+            settings.copyWith(singlePhotoIsCollage: singlePhotoIsCollage),
+      );
     }
   }
 
   void onEnableCollageCaptureChanged(bool? enableCollageCapture) {
     if (enableCollageCapture != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(enableCollageCapture: enableCollageCapture));
+      viewModel.updateProjectSettings(
+        (settings) =>
+            settings.copyWith(enableCollageCapture: enableCollageCapture),
+      );
     }
   }
 
   void onCollageModeChanged(CollageMode? collageMode) {
     if (collageMode != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(collageMode: collageMode));
+      viewModel.updateProjectSettings(
+        (settings) => settings.copyWith(collageMode: collageMode),
+      );
     }
   }
 
   void onProjectLanguageChanged(Language? language) {
     if (language != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(language: language));
+      viewModel.updateProjectSettings(
+        (settings) => settings.copyWith(language: language),
+      );
     }
   }
 
   void onProjectAvailableLanguagesChanged(List<Language>? languages) {
     if (languages != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(availableLanguages: languages));
+      viewModel.updateProjectSettings(
+        (settings) => settings.copyWith(availableLanguages: languages),
+      );
     }
   }
-  
+
   void onShowGalleryChanged(bool? showGallery) {
     if (showGallery != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(showGallery: showGallery));
+      viewModel.updateProjectSettings(
+        (settings) => settings.copyWith(showGallery: showGallery),
+      );
     }
   }
 
   void onShowGetQrButtonChanged(bool? showGetQrButton) {
     if (showGetQrButton != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(showGetQrButton: showGetQrButton));
+      viewModel.updateProjectSettings(
+        (settings) => settings.copyWith(showGetQrButton: showGetQrButton),
+      );
     }
   }
 
   void onEnableWakelockChanged(bool? enableWakelock) {
     if (enableWakelock != null) {
-      viewModel.updateSettings((settings) => settings.copyWith(enableWakelock: enableWakelock));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith(enableWakelock: enableWakelock),
+      );
     }
   }
 
   void onLiveViewAndCaptureRotateChanged(Rotate? liveViewAndCaptureRotate) {
     if (liveViewAndCaptureRotate != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(liveViewAndCaptureRotate: liveViewAndCaptureRotate));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          liveViewAndCaptureRotate: liveViewAndCaptureRotate,
+        ),
+      );
     }
   }
 
   void onLiveViewFlipChanged(Flip? liveViewFlip) {
     if (liveViewFlip != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(liveViewFlip: liveViewFlip));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(liveViewFlip: liveViewFlip),
+      );
     }
   }
 
   void onCaptureFlipChanged(Flip? captureFlip) {
     if (captureFlip != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(captureFlip: captureFlip));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(captureFlip: captureFlip),
+      );
     }
   }
 
-  void onLiveViewAndCaptureAspectRatioChanged(double? liveViewAndCaptureAspectRatio) {
+  void onLiveViewAndCaptureAspectRatioChanged(
+    double? liveViewAndCaptureAspectRatio,
+  ) {
     if (liveViewAndCaptureAspectRatio != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(liveViewAndCaptureAspectRatio: liveViewAndCaptureAspectRatio));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          liveViewAndCaptureAspectRatio: liveViewAndCaptureAspectRatio,
+        ),
+      );
     }
   }
 
   void onLiveViewMethodChanged(LiveViewMethod? liveViewMethod) {
     if (liveViewMethod != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(liveViewMethod: liveViewMethod));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.hardware(liveViewMethod: liveViewMethod),
+      );
     }
   }
 
   void onLiveViewWebcamIdChanged(String? liveViewWebcamId) {
     if (liveViewWebcamId != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(liveViewWebcamId: liveViewWebcamId));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.hardware(liveViewWebcamId: liveViewWebcamId),
+      );
     }
   }
 
   void onCaptureMethodChanged(CaptureMethod? captureMethod) {
     if (captureMethod != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(captureMethod: captureMethod));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(captureMethod: captureMethod),
+      );
     }
   }
 
   void onGPhoto2CameraIdChanged(String? gPhoto2CameraId) {
     if (gPhoto2CameraId != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(gPhoto2CameraId: gPhoto2CameraId));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.hardware(gPhoto2CameraId: gPhoto2CameraId),
+      );
     }
   }
 
-  void onGPhoto2SpecialHandlingChanged(GPhoto2SpecialHandling? gPhoto2SpecialHandling) {
+  void onGPhoto2SpecialHandlingChanged(
+    GPhoto2SpecialHandling? gPhoto2SpecialHandling,
+  ) {
     if (gPhoto2SpecialHandling != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(gPhoto2SpecialHandling: gPhoto2SpecialHandling));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          gPhoto2SpecialHandling: gPhoto2SpecialHandling,
+        ),
+      );
     }
   }
 
   void onGPhoto2CaptureTargetChanged(String? gPhoto2CaptureTarget) {
     if (gPhoto2CaptureTarget != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(gPhoto2CaptureTarget: gPhoto2CaptureTarget));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          gPhoto2CaptureTarget: gPhoto2CaptureTarget,
+        ),
+      );
     }
   }
 
   void onGPhoto2DownloadExtraFilesChanged(bool? gPhoto2DownloadExtraFiles) {
     if (gPhoto2DownloadExtraFiles != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(gPhoto2DownloadExtraFiles: gPhoto2DownloadExtraFiles));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          gPhoto2DownloadExtraFiles: gPhoto2DownloadExtraFiles,
+        ),
+      );
     }
   }
 
-  void onGPhoto2AutoFocusMsBeforeCaptureChanged(int? gPhoto2AutoFocusMsBeforeCapture) {
+  void onGPhoto2AutoFocusMsBeforeCaptureChanged(
+    int? gPhoto2AutoFocusMsBeforeCapture,
+  ) {
     if (gPhoto2AutoFocusMsBeforeCapture != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(gPhoto2AutoFocusMsBeforeCapture: gPhoto2AutoFocusMsBeforeCapture));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          gPhoto2AutoFocusMsBeforeCapture: gPhoto2AutoFocusMsBeforeCapture,
+        ),
+      );
     }
   }
 
   void onCaptureDelayGPhoto2Changed(int? captureDelayGPhoto2) {
     if (captureDelayGPhoto2 != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(captureDelayGPhoto2: captureDelayGPhoto2));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          captureDelayGPhoto2: captureDelayGPhoto2,
+        ),
+      );
     }
   }
 
   void onCaptureDelaySonyChanged(int? captureDelaySony) {
     if (captureDelaySony != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(captureDelaySony: captureDelaySony));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.hardware(captureDelaySony: captureDelaySony),
+      );
     }
   }
 
   void onCaptureLocationChanged(String? captureLocation) {
     if (captureLocation != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(captureLocation: captureLocation));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.hardware(captureLocation: captureLocation),
+      );
       createPathSafe(captureLocation);
     }
   }
 
   void onServeFromDirectoryPathChanged(String? serveFromDirectoryPath) {
     if (serveFromDirectoryPath != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(serveFromDirectoryPath: serveFromDirectoryPath));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          serveFromDirectoryPath: serveFromDirectoryPath,
+        ),
+      );
       createPathSafe(serveFromDirectoryPath);
     }
   }
 
   void onSaveCapturesToDiskChanged(bool? saveCapturesToDisk) {
     if (saveCapturesToDisk != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(saveCapturesToDisk: saveCapturesToDisk));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.hardware(saveCapturesToDisk: saveCapturesToDisk),
+      );
     }
   }
 
-  void onPrintingImplementationChanged(PrintingImplementation? printingImplementation) {
+  void onPrintingImplementationChanged(
+    PrintingImplementation? printingImplementation,
+  ) {
     if (printingImplementation != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(printingImplementation: printingImplementation));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          printingImplementation: printingImplementation,
+        ),
+      );
     }
   }
 
@@ -356,7 +548,10 @@ class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayView
         }
       }
       logDebug("Setting CUPS printer list to $currentList");
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(cupsPrinterQueues: currentList));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.hardware(cupsPrinterQueues: currentList),
+      );
       // If the first printer changed, update the available page size options
       if (printerIndex == 0) {
         viewModel.setCupsPageSizeOptions();
@@ -367,32 +562,60 @@ class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayView
   void onCupsPageSizeChanged(String? mediaSize, PrintSize? printSize) {
     if (mediaSize != null && printSize != null) {
       final dimension = mediaSize == ""
-              ? const PrintDimension(name: "", height: 0, width: 0, keyword: "")
-              : viewModel.mediaDimensions.where((element) => element.keyword == mediaSize).firstOrNull;
+          ? const PrintDimension(name: "", height: 0, width: 0, keyword: "")
+          : viewModel.mediaDimensions
+                .where((element) => element.keyword == mediaSize)
+                .firstOrNull;
       if (dimension == null) return;
-      final newSize = MediaSettings(mediaSizeString: dimension.keyword, mediaSizeHeight: dimension.height, mediaSizeWidth: dimension.width);
+      final newSize = MediaSettings(
+        mediaSizeString: dimension.keyword,
+        mediaSizeHeight: dimension.height,
+        mediaSizeWidth: dimension.width,
+      );
       logDebug("Setting media size for $printSize to $newSize");
 
       switch (printSize) {
         case PrintSize.normal:
-          viewModel.updateSettings((settings) => settings.copyWith.hardware.printLayoutSettings(mediaSizeNormal: newSize));
+          viewModel.updateSettings(
+            (settings) => settings.copyWith.hardware.printLayoutSettings(
+              mediaSizeNormal: newSize,
+            ),
+          );
         case PrintSize.split:
-          viewModel.updateSettings((settings) => settings.copyWith.hardware.printLayoutSettings(mediaSizeSplit: newSize));
+          viewModel.updateSettings(
+            (settings) => settings.copyWith.hardware.printLayoutSettings(
+              mediaSizeSplit: newSize,
+            ),
+          );
         case PrintSize.small:
-          viewModel.updateSettings((settings) => settings.copyWith.hardware.printLayoutSettings(mediaSizeSmall: newSize));
+          viewModel.updateSettings(
+            (settings) => settings.copyWith.hardware.printLayoutSettings(
+              mediaSizeSmall: newSize,
+            ),
+          );
         case PrintSize.tiny:
-          viewModel.updateSettings((settings) => settings.copyWith.hardware.printLayoutSettings(mediaSizeTiny: newSize));
+          viewModel.updateSettings(
+            (settings) => settings.copyWith.hardware.printLayoutSettings(
+              mediaSizeTiny: newSize,
+            ),
+          );
       }
     }
   }
 
   void onCupsGridXChanged(int? x, PrintSize? printSize) {
     if (printSize != null && x != null) {
-      switch(printSize) {
+      switch (printSize) {
         case PrintSize.small:
-          viewModel.updateSettings((settings) => settings.copyWith.hardware.printLayoutSettings.gridSmall(x: x));
+          viewModel.updateSettings(
+            (settings) =>
+                settings.copyWith.hardware.printLayoutSettings.gridSmall(x: x),
+          );
         case PrintSize.tiny:
-          viewModel.updateSettings((settings) => settings.copyWith.hardware.printLayoutSettings.gridTiny(x: x));
+          viewModel.updateSettings(
+            (settings) =>
+                settings.copyWith.hardware.printLayoutSettings.gridTiny(x: x),
+          );
         default:
       }
     }
@@ -400,11 +623,17 @@ class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayView
 
   void onCupsGridYChanged(int? y, PrintSize? printSize) {
     if (printSize != null && y != null) {
-      switch(printSize) {
+      switch (printSize) {
         case PrintSize.small:
-          viewModel.updateSettings((settings) => settings.copyWith.hardware.printLayoutSettings.gridSmall(y: y));
+          viewModel.updateSettings(
+            (settings) =>
+                settings.copyWith.hardware.printLayoutSettings.gridSmall(y: y),
+          );
         case PrintSize.tiny:
-          viewModel.updateSettings((settings) => settings.copyWith.hardware.printLayoutSettings.gridTiny(y: y));
+          viewModel.updateSettings(
+            (settings) =>
+                settings.copyWith.hardware.printLayoutSettings.gridTiny(y: y),
+          );
         default:
       }
     }
@@ -412,11 +641,17 @@ class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayView
 
   void onCupsGridRotateChanged(bool? rotate, PrintSize? printSize) {
     if (printSize != null && rotate != null) {
-      switch(printSize) {
+      switch (printSize) {
         case PrintSize.small:
-          viewModel.updateSettings((settings) => settings.copyWith.hardware.printLayoutSettings.gridSmall(rotate: rotate));
+          viewModel.updateSettings(
+            (settings) => settings.copyWith.hardware.printLayoutSettings
+                .gridSmall(rotate: rotate),
+          );
         case PrintSize.tiny:
-          viewModel.updateSettings((settings) => settings.copyWith.hardware.printLayoutSettings.gridTiny(rotate: rotate));
+          viewModel.updateSettings(
+            (settings) => settings.copyWith.hardware.printLayoutSettings
+                .gridTiny(rotate: rotate),
+          );
         default:
       }
     }
@@ -424,31 +659,43 @@ class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayView
 
   void onCupsUriChanged(String? cupsUri) {
     if (cupsUri != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(cupsUri: cupsUri));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(cupsUri: cupsUri),
+      );
     }
   }
 
   void onCupsIgnoreTlsErrorsChanged(bool? cupsIgnoreTlsErrors) {
     if (cupsIgnoreTlsErrors != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(cupsIgnoreTlsErrors: cupsIgnoreTlsErrors));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          cupsIgnoreTlsErrors: cupsIgnoreTlsErrors,
+        ),
+      );
     }
   }
 
   void onCupsUsernameChanged(String? cupsUsername) {
     if (cupsUsername != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(cupsUsername: cupsUsername));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(cupsUsername: cupsUsername),
+      );
     }
   }
 
   void onCupsPasswordChanged(String? cupsPassword) {
     if (cupsPassword != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(cupsPassword: cupsPassword));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(cupsPassword: cupsPassword),
+      );
     }
   }
 
   void onFlutterPrintingPrinterChanged(String? printerName, int? printerIndex) {
     if (printerName != null && printerIndex != null) {
-      List<String> currentList = List.from(viewModel.flutterPrintingPrinterNamesSetting);
+      List<String> currentList = List.from(
+        viewModel.flutterPrintingPrinterNamesSetting,
+      );
 
       if (printerName == viewModel.unusedPrinterValue) {
         currentList.length = printerIndex;
@@ -460,316 +707,609 @@ class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayView
         }
       }
       logDebug("Setting Flutter printing printerlist to $currentList");
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(flutterPrintingPrinterNames: currentList));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          flutterPrintingPrinterNames: currentList,
+        ),
+      );
     }
   }
 
   void onPageHeightChanged(double? pageHeight) {
     if (pageHeight != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(pageHeight: pageHeight));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(pageHeight: pageHeight),
+      );
     }
   }
 
   void onPageWidthChanged(double? pageWidth) {
     if (pageWidth != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(pageWidth: pageWidth));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(pageWidth: pageWidth),
+      );
     }
   }
 
   void onUsePrinterSettingsChanged(bool? usePrinterSettings) {
     if (usePrinterSettings != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(usePrinterSettings: usePrinterSettings));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.hardware(usePrinterSettings: usePrinterSettings),
+      );
     }
   }
 
   void onPrinterMarginTopChanged(double? marginTop) {
     if (marginTop != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(printerMarginTop: marginTop));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(printerMarginTop: marginTop),
+      );
     }
   }
 
   void onPrinterMarginRightChanged(double? marginRight) {
     if (marginRight != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(printerMarginRight: marginRight));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.hardware(printerMarginRight: marginRight),
+      );
     }
   }
 
   void onPrinterMarginBottomChanged(double? marginBottom) {
     if (marginBottom != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(printerMarginBottom: marginBottom));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.hardware(printerMarginBottom: marginBottom),
+      );
     }
   }
 
   void onPrinterMarginLeftChanged(double? marginLeft) {
     if (marginLeft != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(printerMarginLeft: marginLeft));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(printerMarginLeft: marginLeft),
+      );
     }
   }
 
   void onPrinterQueueWarningThresholdChanged(int? warningThreshold) {
     if (warningThreshold != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.hardware(printerQueueWarningThreshold: warningThreshold));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.hardware(
+          printerQueueWarningThreshold: warningThreshold,
+        ),
+      );
     }
   }
 
   void onFirefoxSendServerUrlChanged(String? firefoxSendServerUrl) {
     if (firefoxSendServerUrl != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.output(firefoxSendServerUrl: firefoxSendServerUrl));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.output(
+          firefoxSendServerUrl: firefoxSendServerUrl,
+        ),
+      );
     }
   }
 
-  void onFirefoxSendControlCommandTimeoutChanged(int? firefoxSendControlCommandTimeout) {
+  void onEnablePrintingChanged(bool? enablePrinting) {
+    if (enablePrinting != null) {
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.output(enablePrinting: enablePrinting),
+      );
+    }
+  }
+
+  void onEnableFirefoxSendChanged(bool? enableFirefoxSend) {
+    if (enableFirefoxSend != null) {
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.output(enableFirefoxSend: enableFirefoxSend),
+      );
+    }
+  }
+
+  void onFirefoxSendControlCommandTimeoutChanged(
+    int? firefoxSendControlCommandTimeout,
+  ) {
     if (firefoxSendControlCommandTimeout != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.output(firefoxSendControlCommandTimeout: Duration(seconds: firefoxSendControlCommandTimeout)));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.output(
+          firefoxSendControlCommandTimeout: Duration(
+            seconds: firefoxSendControlCommandTimeout,
+          ),
+        ),
+      );
     }
   }
 
   void onFirefoxSendTransferTimeoutChanged(int? firefoxSendTransferTimeout) {
     if (firefoxSendTransferTimeout != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.output(firefoxSendTransferTimeout: Duration(seconds: firefoxSendTransferTimeout)));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.output(
+          firefoxSendTransferTimeout: Duration(
+            seconds: firefoxSendTransferTimeout,
+          ),
+        ),
+      );
     }
   }
 
   void onExportFormatChanged(ExportFormat? exportFormat) {
     if (exportFormat != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.output(exportFormat: exportFormat));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.output(exportFormat: exportFormat),
+      );
     }
   }
 
   void onJpgQualityChanged(int? jpgQuality) {
     if (jpgQuality != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.output(jpgQuality: jpgQuality));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.output(jpgQuality: jpgQuality),
+      );
     }
   }
 
   void onResolutionMultiplierChanged(double? resolutionMultiplier) {
     if (resolutionMultiplier != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.output(resolutionMultiplier: resolutionMultiplier));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.output(
+          resolutionMultiplier: resolutionMultiplier,
+        ),
+      );
     }
   }
 
   void onUseFullFrame1PhotoLayoutChanged(bool? useFullFrame1PhotoLayout) {
     if (useFullFrame1PhotoLayout != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.output(useFullFrame1PhotoLayout: useFullFrame1PhotoLayout));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.output(
+          useFullFrame1PhotoLayout: useFullFrame1PhotoLayout,
+        ),
+      );
     }
   }
 
   void onPrimaryColorChanged(Color? primaryColor) {
     if (primaryColor != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(primaryColor: primaryColor));
+      viewModel.updateProjectSettings(
+        (settings) => settings.copyWith(primaryColor: primaryColor),
+      );
     }
   }
 
   void onReturnToHomeTimeoutSecondsChanged(int? returnToHomeTimeoutSeconds) {
     if (returnToHomeTimeoutSeconds != null) {
       var correctedReturnToHomeTimeoutSeconds = returnToHomeTimeoutSeconds;
-      if (correctedReturnToHomeTimeoutSeconds > 0 && correctedReturnToHomeTimeoutSeconds < 15) {
+      if (correctedReturnToHomeTimeoutSeconds > 0 &&
+          correctedReturnToHomeTimeoutSeconds < 15) {
         correctedReturnToHomeTimeoutSeconds = 15;
-        viewModel.returnToHomeTimeoutSecondsKey = UniqueKey(); // Make sure UI shows the actual set value.
+        viewModel.returnToHomeTimeoutSecondsKey =
+            UniqueKey(); // Make sure UI shows the actual set value.
       }
-      viewModel.updateSettings((settings) => settings.copyWith.ui(returnToHomeTimeoutSeconds: correctedReturnToHomeTimeoutSeconds));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.ui(
+          returnToHomeTimeoutSeconds: correctedReturnToHomeTimeoutSeconds,
+        ),
+      );
     }
   }
 
-  void onIntroScreenTouchToStartOverrideText(String? introScreenTouchToStartOverrideText) {
+  void onIntroScreenTouchToStartOverrideText(
+    String? introScreenTouchToStartOverrideText,
+  ) {
     if (introScreenTouchToStartOverrideText != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(introScreenTouchToStartOverrideText: introScreenTouchToStartOverrideText));
+      viewModel.updateProjectSettings(
+        (settings) => settings.copyWith(
+          introScreenTouchToStartOverrideText:
+              introScreenTouchToStartOverrideText,
+        ),
+      );
     }
   }
 
   void onDisplayConfettiChanged(bool? displayConfetti) {
     if (displayConfetti != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(displayConfetti: displayConfetti));
+      viewModel.updateProjectSettings(
+        (settings) => settings.copyWith(displayConfetti: displayConfetti),
+      );
     }
   }
 
   void onCustomColorConfettiChanged(bool? customColorConfetti) {
     if (customColorConfetti != null) {
-      viewModel.updateProjectSettings((settings) => settings.copyWith(customColorConfetti: customColorConfetti));
+      viewModel.updateProjectSettings(
+        (settings) =>
+            settings.copyWith(customColorConfetti: customColorConfetti),
+      );
     }
   }
 
   void onEnableSfxChanged(bool? enableSfx) {
     if (enableSfx != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.ui(enableSfx: enableSfx));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.ui(enableSfx: enableSfx),
+      );
     }
   }
 
   void onClickSfxFileChanged(String? clickSfxFile) {
     if (clickSfxFile != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.ui(clickSfxFile: clickSfxFile));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.ui(clickSfxFile: clickSfxFile),
+      );
     }
   }
 
   void onShareScreenSfxFileChanged(String? shareScreenSfxFile) {
     if (shareScreenSfxFile != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.ui(shareScreenSfxFile: shareScreenSfxFile));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.ui(shareScreenSfxFile: shareScreenSfxFile),
+      );
     }
   }
 
   void onLanguageChanged(Language? language) {
     if (language != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.ui(language: language));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.ui(language: language),
+      );
     }
   }
 
   void onAllowScrollGestureWithMouseChanged(bool? allowScrollGestureWithMouse) {
     if (allowScrollGestureWithMouse != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.ui(allowScrollGestureWithMouse: allowScrollGestureWithMouse));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.ui(
+          allowScrollGestureWithMouse: allowScrollGestureWithMouse,
+        ),
+      );
     }
   }
 
-  void onScreenTransitionAnimationChanged(ScreenTransitionAnimation? screenTransitionAnimation) {
+  void onScreenTransitionAnimationChanged(
+    ScreenTransitionAnimation? screenTransitionAnimation,
+  ) {
     if (screenTransitionAnimation != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.ui(screenTransitionAnimation: screenTransitionAnimation));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.ui(
+          screenTransitionAnimation: screenTransitionAnimation,
+        ),
+      );
     }
   }
 
   void onBackgroundBlurChanged(BackgroundBlur? backgroundBlur) {
     if (backgroundBlur != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.ui(backgroundBlur: backgroundBlur));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.ui(backgroundBlur: backgroundBlur),
+      );
     }
   }
 
-  void onScreenTransitionAnimationFilterQualityChanged(FilterQuality? filterQuality) {
+  void onScreenTransitionAnimationFilterQualityChanged(
+    FilterQuality? filterQuality,
+  ) {
     if (filterQuality != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.ui(screenTransitionAnimationFilterQuality: filterQuality));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.ui(
+          screenTransitionAnimationFilterQuality: filterQuality,
+        ),
+      );
     }
   }
 
   void onLiveViewFilterQualityChanged(FilterQuality? filterQuality) {
     if (filterQuality != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.ui(liveViewFilterQuality: filterQuality));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.ui(liveViewFilterQuality: filterQuality),
+      );
     }
   }
 
   void onShowSettingsButtonChanged(bool? showSettingsButton) {
     if (showSettingsButton != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.ui(showSettingsButton: showSettingsButton));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.ui(showSettingsButton: showSettingsButton),
+      );
     }
   }
 
   void onShowTouchIndicatorChanged(bool? showTouchIndicator) {
     if (showTouchIndicator != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.ui(showTouchIndicator: showTouchIndicator));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.ui(showTouchIndicator: showTouchIndicator),
+      );
     }
   }
 
   void onMqttIntegrationEnableChanged(bool? enable) {
     if (enable != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(enable: enable));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.mqttIntegration(enable: enable),
+      );
     }
   }
 
   void onMqttIntegrationHostChanged(String? host) {
     if (host != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(host: host, enable: false));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.mqttIntegration(host: host, enable: false),
+      );
     }
   }
 
   void onMqttIntegrationPortChanged(int? port) {
     if (port != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(port: port, enable: false));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.mqttIntegration(port: port, enable: false),
+      );
     }
   }
 
   void onMqttIntegrationSecureChanged(bool? secure) {
     if (secure != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(secure: secure, enable: false));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.mqttIntegration(secure: secure, enable: false),
+      );
     }
   }
 
   void onMqttIntegrationVerifyCertificateChanged(bool? verifyCertificate) {
     if (verifyCertificate != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(verifyCertificate: verifyCertificate, enable: false));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.mqttIntegration(
+          verifyCertificate: verifyCertificate,
+          enable: false,
+        ),
+      );
     }
   }
 
   void onMqttIntegrationUseWebSocketChanged(bool? useWebSocket) {
     if (useWebSocket != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(useWebSocket: useWebSocket, enable: false));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.mqttIntegration(
+          useWebSocket: useWebSocket,
+          enable: false,
+        ),
+      );
     }
   }
 
   void onMqttIntegrationUsernameChanged(String? username) {
     if (username != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(username: username, enable: false));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.mqttIntegration(
+          username: username,
+          enable: false,
+        ),
+      );
     }
   }
 
   void onMqttIntegrationClientIdChanged(String? clientId) {
     if (clientId != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(clientId: clientId, enable: false));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.mqttIntegration(
+          clientId: clientId,
+          enable: false,
+        ),
+      );
     }
   }
 
   void onMqttIntegrationRootTopicChanged(String? rootTopic) {
     if (rootTopic != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(rootTopic: rootTopic, enable: false));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.mqttIntegration(
+          rootTopic: rootTopic,
+          enable: false,
+        ),
+      );
     }
   }
 
-  void onMqttIntegrationEnableHomeAssistantDiscoveryChanged(bool? enableHomeAssistantDiscovery) {
+  void onMqttIntegrationEnableHomeAssistantDiscoveryChanged(
+    bool? enableHomeAssistantDiscovery,
+  ) {
     if (enableHomeAssistantDiscovery != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(enableHomeAssistantDiscovery: enableHomeAssistantDiscovery, enable: false));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.mqttIntegration(
+          enableHomeAssistantDiscovery: enableHomeAssistantDiscovery,
+          enable: false,
+        ),
+      );
     }
   }
 
-  void onMqttIntegrationHomeAssistantDiscoveryTopicPrefixChanged(String? homeAssistantDiscoveryTopicPrefix) {
+  void onMqttIntegrationHomeAssistantDiscoveryTopicPrefixChanged(
+    String? homeAssistantDiscoveryTopicPrefix,
+  ) {
     if (homeAssistantDiscoveryTopicPrefix != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(homeAssistantDiscoveryTopicPrefix: homeAssistantDiscoveryTopicPrefix, enable: false));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.mqttIntegration(
+          homeAssistantDiscoveryTopicPrefix: homeAssistantDiscoveryTopicPrefix,
+          enable: false,
+        ),
+      );
     }
   }
 
-  void onMqttIntegrationHomeAssistantComponentIdChanged(String? homeAssistantComponentId) {
+  void onMqttIntegrationHomeAssistantComponentIdChanged(
+    String? homeAssistantComponentId,
+  ) {
     if (homeAssistantComponentId != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.mqttIntegration(homeAssistantComponentId: homeAssistantComponentId, enable: false));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.mqttIntegration(
+          homeAssistantComponentId: homeAssistantComponentId,
+          enable: false,
+        ),
+      );
+    }
+  }
+
+  void onImmichIntegrationEnableChanged(bool? enable) {
+    if (enable != null) {
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.immichIntegration(enable: enable),
+      );
+    }
+  }
+
+  void onImmichIntegrationServerUrlChanged(String? serverUrl) {
+    if (serverUrl != null) {
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.immichIntegration(serverUrl: serverUrl.trim()),
+      );
+    }
+  }
+
+  void onImmichIntegrationAlbumNameChanged(String? albumName) {
+    if (albumName != null) {
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.immichIntegration(albumName: albumName.trim()),
+      );
+    }
+  }
+
+  Future<void> testImmichConnection() async {
+    final serverUrl = viewModel.immichIntegrationServerUrlSetting.trim();
+    if (serverUrl.isEmpty) {
+      await showUserDialog(
+        barrierDismissible: true,
+        dialog: const ContentDialog(
+          title: Text('Immich connection failed'),
+          content: Text('Enter an Immich server URL first.'),
+        ),
+      );
+      return;
+    }
+
+    final apiKey = await getIt<SecretsRepository>().getSecret(
+      immichApiKeySecretKey,
+    );
+    if (apiKey == null || apiKey.isEmpty) {
+      await showUserDialog(
+        barrierDismissible: true,
+        dialog: const ContentDialog(
+          title: Text('Immich connection failed'),
+          content: Text('Enter an Immich API key first.'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$serverUrl/api/server/ping'),
+        headers: {'x-api-key': apiKey},
+      );
+      final success = response.statusCode >= 200 && response.statusCode < 300;
+      await showUserDialog(
+        barrierDismissible: true,
+        dialog: ContentDialog(
+          title: Text(
+            success
+                ? 'Immich connection successful'
+                : 'Immich connection failed',
+          ),
+          content: Text(
+            success
+                ? 'The Immich server is reachable.'
+                : 'Immich returned HTTP ${response.statusCode}.',
+          ),
+        ),
+      );
+    } catch (error) {
+      await showUserDialog(
+        barrierDismissible: true,
+        dialog: ContentDialog(
+          title: const Text('Immich connection failed'),
+          content: Text('Could not connect to Immich: $error'),
+        ),
+      );
     }
   }
 
   void onExternalSystemChecksChanged(List<ExternalSystemCheckSetting> checks) {
-    viewModel.updateSettings((settings) => settings.copyWith(externalSystemChecks: checks));
+    viewModel.updateSettings(
+      (settings) => settings.copyWith(externalSystemChecks: checks),
+    );
   }
 
   void onExternalSystemCheckIntervalChanged(int? interval) {
     if (interval != null) {
-      viewModel.updateSettings((settings) => settings.copyWith(externalSystemCheckIntervalSeconds: interval));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith(externalSystemCheckIntervalSeconds: interval),
+      );
     }
   }
 
   void onFaceRecognitionEnableChanged(bool? enable) {
     if (enable != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.faceRecognition(enable: enable));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.faceRecognition(enable: enable),
+      );
     }
   }
 
   void onFaceRecognitionServerUrlChanged(String? serverUrl) {
     if (serverUrl != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.faceRecognition(serverUrl: serverUrl));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.faceRecognition(serverUrl: serverUrl),
+      );
     }
   }
 
   void onDebugShowFpsCounterChanged(bool? showFpsCounter) {
     if (showFpsCounter != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.debug(showFpsCounter: showFpsCounter));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.debug(showFpsCounter: showFpsCounter),
+      );
     }
   }
 
   void onSimulateCvdChanged(ColorVisionDeficiency? simulateCvd) {
     if (simulateCvd != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.debug(simulateCvd: simulateCvd, simulateCvdSeverity: 9));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.debug(
+          simulateCvd: simulateCvd,
+          simulateCvdSeverity: 9,
+        ),
+      );
     }
   }
 
   void onSimulateCvdSeverityChanged(int? simulateCvdSeverity) {
     if (simulateCvdSeverity != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.debug(simulateCvdSeverity: simulateCvdSeverity));
+      viewModel.updateSettings(
+        (settings) =>
+            settings.copyWith.debug(simulateCvdSeverity: simulateCvdSeverity),
+      );
     }
   }
 
   void onEnableExtensivePrintJobLogChanged(bool? enableExtensivePrintJobLog) {
     if (enableExtensivePrintJobLog != null) {
-      viewModel.updateSettings((settings) => settings.copyWith.debug(enableExtensivePrintJobLog: enableExtensivePrintJobLog));
+      viewModel.updateSettings(
+        (settings) => settings.copyWith.debug(
+          enableExtensivePrintJobLog: enableExtensivePrintJobLog,
+        ),
+      );
     }
   }
 
@@ -814,37 +1354,46 @@ class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayView
   }
 
   Future<void> onGetCameraConfigPressed() async {
-    final details = await getIt<LiveViewManager>().gPhoto2Camera!.getCameraDetails();
+    final details = await getIt<LiveViewManager>().gPhoto2Camera!
+        .getCameraDetails();
     logInfo("Config: ${details.config}");
   }
 
   Future<void> onCopyCameraInfoToClipboardPressed() async {
-    final details = await getIt<LiveViewManager>().gPhoto2Camera!.getCameraDetails();
+    final details = await getIt<LiveViewManager>().gPhoto2Camera!
+        .getCameraDetails();
     await Clipboard.setData(ClipboardData(text: jsonEncode(details.toJson())));
   }
 
   // Debug camera config controllers
 
   TextEditingController? _debugConfigTextKeyController;
-  TextEditingController get debugConfigTextKeyController => _debugConfigTextKeyController ??= TextEditingController();
+  TextEditingController get debugConfigTextKeyController =>
+      _debugConfigTextKeyController ??= TextEditingController();
 
   TextEditingController? _debugConfigTextValueController;
-  TextEditingController get debugConfigTextValueController => _debugConfigTextValueController ??= TextEditingController();
+  TextEditingController get debugConfigTextValueController =>
+      _debugConfigTextValueController ??= TextEditingController();
 
   TextEditingController? _debugConfigToggleKeyController;
-  TextEditingController get debugConfigToggleKeyController => _debugConfigToggleKeyController ??= TextEditingController();
+  TextEditingController get debugConfigToggleKeyController =>
+      _debugConfigToggleKeyController ??= TextEditingController();
 
   TextEditingController? _debugConfigRadioKeyController;
-  TextEditingController get debugConfigRadioKeyController => _debugConfigRadioKeyController ??= TextEditingController();
+  TextEditingController get debugConfigRadioKeyController =>
+      _debugConfigRadioKeyController ??= TextEditingController();
 
   TextEditingController? _debugConfigRadioValueController;
-  TextEditingController get debugConfigRadioValueController => _debugConfigRadioValueController ??= TextEditingController();
+  TextEditingController get debugConfigRadioValueController =>
+      _debugConfigRadioValueController ??= TextEditingController();
 
   TextEditingController? _debugConfigRangeKeyController;
-  TextEditingController get debugConfigRangeKeyController => _debugConfigRangeKeyController ??= TextEditingController();
+  TextEditingController get debugConfigRangeKeyController =>
+      _debugConfigRangeKeyController ??= TextEditingController();
 
   TextEditingController? _debugConfigRangeValueController;
-  TextEditingController get debugConfigRangeValueController => _debugConfigRangeValueController ??= TextEditingController();
+  TextEditingController get debugConfigRangeValueController =>
+      _debugConfigRangeValueController ??= TextEditingController();
 
   Future<void> onSetConfigTextPressed() async {
     await getIt<LiveViewManager>().gPhoto2Camera!.setConfigText(
@@ -882,5 +1431,4 @@ class SettingsOverlayController extends ScreenControllerBase<SettingsOverlayView
       value,
     );
   }
-
 }

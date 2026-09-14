@@ -15,6 +15,49 @@ Widget _getMqttIntegrationSettings(SettingsOverlayViewModel viewModel, SettingsO
       _getConnectionBlock(viewModel, controller),
       _getClientBlock(viewModel, controller),
       _getHomeAssistantBlock(viewModel, controller),
+      _getImmichBlock(viewModel, controller),
+    ],
+  );
+}
+
+Widget _getImmichBlock(SettingsOverlayViewModel viewModel, SettingsOverlayController controller) {
+  return SettingsSection(
+    title: 'Immich integration',
+    settings: [
+      SettingsToggleTile(
+        icon: LucideIcons.image,
+        title: 'Enable Immich Publishing',
+        subtitle: 'If enabled, captured pictures can later be published to Immich.',
+        value: () => viewModel.immichIntegrationEnableSetting,
+        onChanged: controller.onImmichIntegrationEnableChanged,
+      ),
+      SettingsTextEditTile(
+        icon: LucideIcons.server,
+        title: 'Immich URL',
+        subtitle: 'The URL of the Immich server, for example https://immich.example.com.',
+        controller: controller.immichIntegrationServerUrlController,
+        onFinishedEditing: controller.onImmichIntegrationServerUrlChanged,
+      ),
+      SettingsTextEditTile(
+        icon: LucideIcons.album,
+        title: 'Immich album',
+        subtitle: 'The name of the Immich album where captured pictures should be uploaded.',
+        controller: controller.immichIntegrationAlbumNameController,
+        onFinishedEditing: controller.onImmichIntegrationAlbumNameChanged,
+      ),
+      SettingsSecretEditTile(
+        icon: LucideIcons.keyRound,
+        title: 'Immich API key',
+        subtitle: 'The API key used to access Immich. It is stored using encrypted storage.',
+        secretStorageKey: immichApiKeySecretKey,
+      ),
+      SettingsActionTile(
+        icon: LucideIcons.wifi,
+        title: 'Test Immich connection',
+        subtitle: 'Check whether the configured Immich server and API key work.',
+        buttonText: 'Test connection',
+        onPressed: controller.testImmichConnection,
+      ),
     ],
   );
 }

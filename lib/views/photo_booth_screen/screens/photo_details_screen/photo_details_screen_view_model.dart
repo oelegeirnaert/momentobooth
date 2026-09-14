@@ -17,10 +17,11 @@ import 'package:path/path.dart' as path;
 
 part 'photo_details_screen_view_model.g.dart';
 
-class PhotoDetailsScreenViewModel = PhotoDetailsScreenViewModelBase with _$PhotoDetailsScreenViewModel;
+class PhotoDetailsScreenViewModel = PhotoDetailsScreenViewModelBase
+    with _$PhotoDetailsScreenViewModel;
 
-abstract class PhotoDetailsScreenViewModelBase extends ScreenViewModelBase with Store {
-
+abstract class PhotoDetailsScreenViewModelBase extends ScreenViewModelBase
+    with Store {
   final String photoId;
 
   PhotoDetailsScreenViewModelBase({
@@ -29,11 +30,18 @@ abstract class PhotoDetailsScreenViewModelBase extends ScreenViewModelBase with 
   });
 
   Directory get outputDir => getIt<ProjectManager>().getOutputDir();
-  bool get showGetQrButton => getIt<ProjectManager>().settings.showGetQrButton;
+  bool get showGetQrButton =>
+      getIt<ProjectManager>().settings.showGetQrButton &&
+      getIt<SettingsManager>().settings.output.enableFirefoxSend;
+  bool get showPrintButton =>
+      getIt<SettingsManager>().settings.output.enablePrinting;
   File? get file => File(path.join(outputDir.path, photoId));
-  Future<List<MomentoBoothExifTag>> get metadata async => await getMomentoBoothExifTagsFromFile(imageFilePath: file!.path);
-  Future<GalleryImage> get galleryImage async => GalleryImage(file: file!, exifTags: await metadata);
-  Future<MakerNoteData?> get makerNoteData async => (await galleryImage).makerNoteData;
+  Future<List<MomentoBoothExifTag>> get metadata async =>
+      await getMomentoBoothExifTagsFromFile(imageFilePath: file!.path);
+  Future<GalleryImage> get galleryImage async =>
+      GalleryImage(file: file!, exifTags: await metadata);
+  Future<MakerNoteData?> get makerNoteData async =>
+      (await galleryImage).makerNoteData;
 
   @observable
   late String printText = localizations.genericPrintButton;
@@ -53,7 +61,8 @@ abstract class PhotoDetailsScreenViewModelBase extends ScreenViewModelBase with 
   @readonly
   Size? _imageSize;
 
-  String get ffSendUrl => getIt<SettingsManager>().settings.output.firefoxSendServerUrl;
+  String get ffSendUrl =>
+      getIt<SettingsManager>().settings.output.firefoxSendServerUrl;
 
   Future<void> uploadPhotoToSend() async {
     logDebug("Uploading ${file!.path}");
@@ -63,34 +72,41 @@ abstract class PhotoDetailsScreenViewModelBase extends ScreenViewModelBase with 
       filePath: file!.path,
       hostUrl: ffSendUrl,
       downloadFilename: basename,
-      controlCommandTimeout: getIt<SettingsManager>().settings.output.firefoxSendControlCommandTimeout,
-      transferTimeout: getIt<SettingsManager>().settings.output.firefoxSendTransferTimeout,
+      controlCommandTimeout: getIt<SettingsManager>()
+          .settings
+          .output
+          .firefoxSendControlCommandTimeout,
+      transferTimeout:
+          getIt<SettingsManager>().settings.output.firefoxSendTransferTimeout,
     );
 
     _uploadProgress = 0.0;
     _uploadFailed = false;
 
-    stream.listen((event) async {
-      if (event.isFinished) {
-        logDebug("Upload complete: ${event.downloadUrl}");
+    stream
+        .listen((event) async {
+          if (event.isFinished) {
+            logDebug("Upload complete: ${event.downloadUrl}");
 
-        await Future.delayed(const Duration(milliseconds: 500));
-        _qrUrl = event.downloadUrl;
-        _uploadProgress = null;
+            await Future.delayed(const Duration(milliseconds: 500));
+            _qrUrl = event.downloadUrl;
+            _uploadProgress = null;
 
-        getIt<StatsManager>().addUploadedPhoto();
-      } else {
-        logDebug("Uploading: ${event.transferredBytes}/${event.totalBytes} bytes");
-        _uploadProgress = event.transferredBytes / (event.totalBytes ?? 0);
-      }
-    }).onError((x) async {
-      logError("Upload failed, file path: ${file!.path}", x);
-      await Future.delayed(const Duration(seconds: 1));
-      _uploadProgress = null;
-      _uploadFailed = true;
-    });
+            getIt<StatsManager>().addUploadedPhoto();
+          } else {
+            logDebug(
+              "Uploading: ${event.transferredBytes}/${event.totalBytes} bytes",
+            );
+            _uploadProgress = event.transferredBytes / (event.totalBytes ?? 0);
+          }
+        })
+        .onError((x) async {
+          logError("Upload failed, file path: ${file!.path}", x);
+          await Future.delayed(const Duration(seconds: 1));
+          _uploadProgress = null;
+          _uploadFailed = true;
+        });
   }
 
   void onImageDecoded(Size size) => _imageSize = size;
-
 }

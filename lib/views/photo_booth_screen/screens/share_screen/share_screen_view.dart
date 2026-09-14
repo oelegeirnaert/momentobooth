@@ -13,8 +13,8 @@ import 'package:momento_booth/views/photo_booth_screen/screens/components/text/p
 import 'package:momento_booth/views/photo_booth_screen/screens/share_screen/share_screen_controller.dart';
 import 'package:momento_booth/views/photo_booth_screen/screens/share_screen/share_screen_view_model.dart';
 
-class ShareScreenView extends ScreenViewBase<ShareScreenViewModel, ShareScreenController> {
-
+class ShareScreenView
+    extends ScreenViewBase<ShareScreenViewModel, ShareScreenController> {
   const ShareScreenView({
     required super.viewModel,
     required super.controller,
@@ -23,10 +23,18 @@ class ShareScreenView extends ScreenViewBase<ShareScreenViewModel, ShareScreenCo
 
   @override
   Widget get body {
-    Widget image = ImageWithLoaderFallback.memory(viewModel.outputImage, fit: BoxFit.contain);
+    Widget image = ImageWithLoaderFallback.memory(
+      viewModel.outputImage,
+      fit: BoxFit.contain,
+    );
 
     Widget aspectRatioWrapper = Observer(
-      builder: (_) => viewModel.imageSize != null ? AspectRatio(aspectRatio: viewModel.imageSize!.aspectRatio, child: image) : image,
+      builder: (_) => viewModel.imageSize != null
+          ? AspectRatio(
+              aspectRatio: viewModel.imageSize!.aspectRatio,
+              child: image,
+            )
+          : image,
     );
 
     return Stack(
@@ -35,7 +43,12 @@ class ShareScreenView extends ScreenViewBase<ShareScreenViewModel, ShareScreenCo
         Container(
           padding: const EdgeInsets.all(30),
           alignment: Alignment.center,
-          child: context.theme.fullScreenPictureTheme.frameBuilder?.call(context, aspectRatioWrapper) ?? aspectRatioWrapper,
+          child:
+              context.theme.fullScreenPictureTheme.frameBuilder?.call(
+                context,
+                aspectRatioWrapper,
+              ) ??
+              aspectRatioWrapper,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 30),
@@ -48,12 +61,30 @@ class ShareScreenView extends ScreenViewBase<ShareScreenViewModel, ShareScreenCo
 
   List<Widget> get _confettiStack {
     return [
-      Align(alignment: Alignment.bottomLeft, child: _confetti(-0.25 * pi, 45)), // top right
-      Align(alignment: Alignment.bottomLeft, child: _confetti(-0.325 * pi, 42)), // top right
-      Align(alignment: Alignment.bottomLeft, child: _confetti(-0.4 * pi, 30)), // top right
-      Align(alignment: Alignment.bottomRight, child: _confetti(-0.75 * pi, 45)), // top left
-      Align(alignment: Alignment.bottomRight, child: _confetti(-0.675 * pi, 42)), // top left
-      Align(alignment: Alignment.bottomRight, child: _confetti(-0.6 * pi, 30)), // top left
+      Align(
+        alignment: Alignment.bottomLeft,
+        child: _confetti(-0.25 * pi, 45),
+      ), // top right
+      Align(
+        alignment: Alignment.bottomLeft,
+        child: _confetti(-0.325 * pi, 42),
+      ), // top right
+      Align(
+        alignment: Alignment.bottomLeft,
+        child: _confetti(-0.4 * pi, 30),
+      ), // top right
+      Align(
+        alignment: Alignment.bottomRight,
+        child: _confetti(-0.75 * pi, 45),
+      ), // top left
+      Align(
+        alignment: Alignment.bottomRight,
+        child: _confetti(-0.675 * pi, 42),
+      ), // top left
+      Align(
+        alignment: Alignment.bottomRight,
+        child: _confetti(-0.6 * pi, 30),
+      ), // top left
     ];
   }
 
@@ -130,20 +161,22 @@ class ShareScreenView extends ScreenViewBase<ShareScreenViewModel, ShareScreenCo
               ),
             ),
           ),
-        Flexible(
-          child: Observer(
-            builder: (context) => PhotoBoothButton.action(
-              onPressed: viewModel.printEnabled ? controller.onClickPrint : null,
-              child: AutoSizeTextAndIcon(
-                text: viewModel.printText,
-                leftIcon: LucideIcons.printer,
-                autoSizeGroup: controller.actionButtonGroup,
+        if (viewModel.showPrintButton)
+          Flexible(
+            child: Observer(
+              builder: (context) => PhotoBoothButton.action(
+                onPressed: viewModel.printEnabled
+                    ? controller.onClickPrint
+                    : null,
+                child: AutoSizeTextAndIcon(
+                  text: viewModel.printText,
+                  leftIcon: LucideIcons.printer,
+                  autoSizeGroup: controller.actionButtonGroup,
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
-
 }

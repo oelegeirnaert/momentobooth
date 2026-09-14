@@ -1,4 +1,5 @@
 const String mqttPasswordSecretKey = 'mqtt_password';
+const String immichApiKeySecretKey = 'immich_api_key';
 const String settingsPincodeKey = 'settings_pin';
 
 abstract class SecretsRepository {

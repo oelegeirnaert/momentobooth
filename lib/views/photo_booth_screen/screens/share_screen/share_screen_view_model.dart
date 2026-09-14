@@ -17,17 +17,21 @@ import 'package:momento_booth/views/base/screen_view_model_base.dart';
 
 part 'share_screen_view_model.g.dart';
 
-class ShareScreenViewModel = ShareScreenViewModelBase with _$ShareScreenViewModel;
+class ShareScreenViewModel = ShareScreenViewModelBase
+    with _$ShareScreenViewModel;
 
 abstract class ShareScreenViewModelBase extends ScreenViewModelBase with Store {
-
-  ShareScreenViewModelBase({
-    required super.contextAccessor,
-  });
+  ShareScreenViewModelBase({required super.contextAccessor});
 
   bool get displayConfetti => getIt<ProjectManager>().settings.displayConfetti;
-  bool get showGetQrButton => getIt<ProjectManager>().settings.showGetQrButton;
-  late final ConfettiController confettiController = ConfettiController(duration: const Duration(milliseconds: 100))..play();
+  bool get showGetQrButton =>
+      getIt<ProjectManager>().settings.showGetQrButton &&
+      getIt<SettingsManager>().settings.output.enableFirefoxSend;
+  bool get showPrintButton =>
+      getIt<SettingsManager>().settings.output.enablePrinting;
+  late final ConfettiController confettiController = ConfettiController(
+    duration: const Duration(milliseconds: 100),
+  )..play();
 
   Uint8List get outputImage => getIt<PhotosManager>().outputImage!;
 
@@ -57,27 +61,37 @@ abstract class ShareScreenViewModelBase extends ScreenViewModelBase with Store {
     final theme = FluentTheme.of(contextAccessor.buildContext);
     final accentColor = HSLColor.fromColor(theme.accentColor);
     final List<double> lValues = [0.2, 0.4, 0.5, 0.7, 0.9, 1];
-    final accentColorsHSL = lValues.map((e) => HSLColor.fromAHSL(1, accentColor.hue, accentColor.saturation, e));
+    final accentColorsHSL = lValues.map(
+      (e) => HSLColor.fromAHSL(1, accentColor.hue, accentColor.saturation, e),
+    );
     final accentColors = accentColorsHSL.map((e) => e.toColor()).toList();
 
     return accentColors;
   }
 
-  String get ffSendUrl => getIt<SettingsManager>().settings.output.firefoxSendServerUrl;
+  String get ffSendUrl =>
+      getIt<SettingsManager>().settings.output.firefoxSendServerUrl;
   CaptureMode get captureMode => getIt<PhotosManager>().captureMode;
   bool get canRetake {
     switch (captureMode) {
       case CaptureMode.single:
         return true;
       case CaptureMode.collage:
-        return getIt<ProjectManager>().settings.collageMode != CollageMode.userSelection;
+        return getIt<ProjectManager>().settings.collageMode !=
+            CollageMode.userSelection;
     }
   }
-  String get backText => canRetake ? localizations.shareScreenRetakeButton : localizations.shareScreenChangeButton;
+
+  String get backText => canRetake
+      ? localizations.shareScreenRetakeButton
+      : localizations.shareScreenChangeButton;
 
   Future<void> uploadPhotoToSend() async {
-    _file ??= getIt<PhotosManager>().lastPhotoFile ?? await getIt<PhotosManager>().getOutputImageAsTempFile();
-    final ext = getIt<SettingsManager>().settings.output.exportFormat.name.toLowerCase();
+    _file ??=
+        getIt<PhotosManager>().lastPhotoFile ??
+        await getIt<PhotosManager>().getOutputImageAsTempFile();
+    final ext = getIt<SettingsManager>().settings.output.exportFormat.name
+        .toLowerCase();
 
     logDebug("Uploading ${_file!.path}");
 
@@ -88,34 +102,41 @@ abstract class ShareScreenViewModelBase extends ScreenViewModelBase with Store {
       filePath: _file!.path,
       hostUrl: ffSendUrl,
       downloadFilename: filename,
-      controlCommandTimeout: getIt<SettingsManager>().settings.output.firefoxSendControlCommandTimeout,
-      transferTimeout: getIt<SettingsManager>().settings.output.firefoxSendTransferTimeout,
+      controlCommandTimeout: getIt<SettingsManager>()
+          .settings
+          .output
+          .firefoxSendControlCommandTimeout,
+      transferTimeout:
+          getIt<SettingsManager>().settings.output.firefoxSendTransferTimeout,
     );
 
     _uploadProgress = 0.0;
     _uploadFailed = false;
 
-    stream.listen((event) async {
-      if (event.isFinished) {
-        logDebug("Upload complete: ${event.downloadUrl}");
+    stream
+        .listen((event) async {
+          if (event.isFinished) {
+            logDebug("Upload complete: ${event.downloadUrl}");
 
-        await Future.delayed(const Duration(milliseconds: 500));
-        _qrUrl = event.downloadUrl;
-        _uploadProgress = null;
+            await Future.delayed(const Duration(milliseconds: 500));
+            _qrUrl = event.downloadUrl;
+            _uploadProgress = null;
 
-        getIt<StatsManager>().addUploadedPhoto();
-      } else {
-        logDebug("Uploading: ${event.transferredBytes}/${event.totalBytes} bytes");
-        _uploadProgress = event.transferredBytes / (event.totalBytes ?? 0);
-      }
-    }).onError((x) async {
-      logError("Upload failed, file path: ${_file!.path}", x);
-      await Future.delayed(const Duration(seconds: 1));
-      _uploadProgress = null;
-      _uploadFailed = true;
-    });
+            getIt<StatsManager>().addUploadedPhoto();
+          } else {
+            logDebug(
+              "Uploading: ${event.transferredBytes}/${event.totalBytes} bytes",
+            );
+            _uploadProgress = event.transferredBytes / (event.totalBytes ?? 0);
+          }
+        })
+        .onError((x) async {
+          logError("Upload failed, file path: ${_file!.path}", x);
+          await Future.delayed(const Duration(seconds: 1));
+          _uploadProgress = null;
+          _uploadFailed = true;
+        });
   }
 
   void onImageDecoded(Size size) => _imageSize = size;
-
 }

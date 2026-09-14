@@ -102,6 +102,7 @@ dev_dependencies:
   # UI
   widgetbook_generator: 3.24.0
   theme_tailor: 4.0.1
+  flutter_test: { sdk: flutter }
 
   # MVC
   mobx_codegen: 2.7.8
