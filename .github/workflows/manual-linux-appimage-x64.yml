@@ -144,6 +144,24 @@ jobs:
     - name: Pack as AppImage
       run: APPIMAGE_EXTRACT_AND_RUN=1 appimagetool AppDir && mv MomentoBooth-x86_64.AppImage MomentoBooth-Linux-x86_64.AppImage
 
+    - name: Verify AppImage graphics libraries
+      run: |
+        ./MomentoBooth-Linux-x86_64.AppImage --appimage-extract >/dev/null
+        if find squashfs-root/lib squashfs-root/app/lib -maxdepth 1 \( \
+          -name 'libEGL*' -o -name 'libGL*' -o -name 'libGLX*' -o -name 'libOpenGL*' \
+          -o -name 'libgbm*' -o -name 'libdrm*' -o -name 'libwayland*' \
+          -o -name 'libX11*' -o -name 'libxcb*' \
+        \) -print -quit | grep -q .; then
+          echo 'AppImage contains host graphics libraries'
+          find squashfs-root/lib squashfs-root/app/lib -maxdepth 1 \( \
+            -name 'libEGL*' -o -name 'libGL*' -o -name 'libGLX*' -o -name 'libOpenGL*' \
+            -o -name 'libgbm*' -o -name 'libdrm*' -o -name 'libwayland*' \
+            -o -name 'libX11*' -o -name 'libxcb*' \
+          \) -print
+          exit 1
+        fi
+        rm -rf squashfs-root
+
     - name: Upload AppImage artifact
       uses: actions/upload-artifact@v7
       with:
