@@ -1,0 +1,146 @@
+name: Manual Linux AppImage x86_64
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Git tag to create or update
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      CARGO_PROFILE_RELEASE_LTO: true
+      CARGO_PROFILE_RELEASE_CODEGEN_UNITS: 1
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        submodules: 'true'
+
+    - name: Install apt packages
+      run: sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y build-essential git clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev llvm libfuse2 libgphoto2-dev libdigest-sha-perl libsecret-1-dev libcurl4-openssl-dev libusb-1.0-0-dev libmimalloc-dev libmimalloc2.0 libasound2-dev openjdk-17-jdk-headless
+
+    - name: Detect Flutter Version
+      uses: kuhnroyal/flutter-fvm-config-action@v3
+
+    - name: Setup Flutter
+      uses: flutter-actions/setup-flutter@v4
+      with:
+        channel: stable
+        version: ${{ env.FLUTTER_VERSION }}
+        cache: true
+        cache-sdk: true
+
+    - name: Prepare Flutter SDK
+      run: |
+        flutter config --no-analytics --no-cli-animations
+        flutter config --enable-linux-desktop
+        flutter precache --linux
+        flutter doctor -v
+
+    - name: Configure Java for JNI
+      run: echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> "$GITHUB_ENV"
+
+    - name: Install PowerShell
+      run: |
+        wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb
+        sudo dpkg -i packages-microsoft-prod.deb
+        rm packages-microsoft-prod.deb
+        sudo apt update
+        sudo DEBIAN_FRONTEND=noninteractive apt install -y powershell
+
+    - name: Install minimal Rust
+      shell: bash
+      run: |
+        curl --http1.1 --retry 5 --retry-delay 5 --retry-all-errors \
+          --fail --silent --show-error \
+          -L https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init \
+          -o /tmp/rustup-init
+        chmod +x /tmp/rustup-init
+        /tmp/rustup-init -y --default-toolchain stable
+        echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+        "$HOME/.cargo/bin/rustc" --version
+
+    - name: Setup Rust cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: |
+          rust -> ../build/linux/x64/release/cargo/build
+          rust -> target
+
+    - name: Install cargo-binstall
+      uses: cargo-bins/cargo-binstall@main
+
+    - name: Install cargo-expand, frbc, lddtree
+      run: cargo binstall cargo-expand flutter_rust_bridge_codegen@2.13.0 lddtree --force -y
+
+    - name: Install appimagetool
+      run: wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" && chmod +x appimagetool && sudo mv appimagetool /usr/local/bin/
+
+    - name: Prepare sources
+      run: |
+        flutter pub get --enforce-lockfile
+        flutter gen-l10n
+        flutter_rust_bridge_codegen generate
+        dart run build_runner build
+        flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings
+
+    - name: Flutter build
+      run: flutter build linux -v --no-pub --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} --dart-define=SENTRY_ENVIRONMENT=Production --dart-define=SENTRY_RELEASE=${{ github.sha }}
+
+    - name: Create AppDir and copy Flutter bundle
+      run: mkdir -p AppDir/app && cp -r build/linux/x64/release/bundle/* AppDir/app/
+
+    - name: Bundle main executable dependency libraries
+      run: mkdir AppDir/lib && pwsh linux/packaging/appimage/bundle_deps.ps1 -executablePath AppDir/app/photobooth -copyTo AppDir/lib
+
+    - name: Bundle Rust library and Flutter plugin dependency libraries
+      run: for f in AppDir/app/lib/*; do pwsh linux/packaging/appimage/bundle_deps.ps1 -executablePath "$f" -copyTo AppDir/lib; done
+
+    - name: Copy camlibs/iolibs and bundle deps
+      run: |
+        mkdir AppDir/camlibs && cp /usr/lib/x86_64-linux-gnu/libgphoto2/*/* AppDir/camlibs
+        mkdir AppDir/iolibs && cp /usr/lib/x86_64-linux-gnu/libgphoto2_port/*/* AppDir/iolibs
+        for f in /usr/lib/x86_64-linux-gnu/libgphoto2/*/*; do pwsh linux/packaging/appimage/bundle_deps.ps1 -executablePath "$f" -copyTo AppDir/lib; done
+        for f in /usr/lib/x86_64-linux-gnu/libgphoto2_port/*/*; do pwsh linux/packaging/appimage/bundle_deps.ps1 -executablePath "$f" -copyTo AppDir/lib; done
+
+    - name: Copy GTK printbackends and bundle deps
+      run: |
+        mkdir AppDir/gtk && cp -r /usr/lib/x86_64-linux-gnu/gtk-3.0/3.0.0/printbackends AppDir/gtk
+        for f in /usr/lib/x86_64-linux-gnu/gtk-3.0/3.0.0/printbackends/*; do pwsh linux/packaging/appimage/bundle_deps.ps1 -executablePath "$f" -copyTo AppDir/lib; done
+
+    - name: Copy icon, desktop file and AppRun
+      run: |
+        cp linux/packaging/appimage/momentoBooth.desktop AppDir/
+        cp linux/packaging/appimage/AppRun AppDir/
+        cp linux/packaging/appimage/icon.svg AppDir/
+        chmod +x AppDir/AppRun
+
+    - name: Pack as AppImage
+      run: APPIMAGE_EXTRACT_AND_RUN=1 appimagetool AppDir && mv MomentoBooth-x86_64.AppImage MomentoBooth-Linux-x86_64.AppImage
+
+    - name: Upload AppImage artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: Linux x86_64 AppImage
+        path: MomentoBooth-Linux-x86_64.AppImage
+        archive: false
+
+    - name: Create GitHub release
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        prerelease: true
+        replacesArtifacts: true
+        omitBodyDuringUpdate: true
+        tag: ${{ inputs.release_tag }}
+        artifacts: MomentoBooth-Linux-x86_64.AppImage
