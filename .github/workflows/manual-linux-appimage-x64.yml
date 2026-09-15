@@ -118,6 +118,22 @@ jobs:
         mkdir AppDir/gtk && cp -r /usr/lib/x86_64-linux-gnu/gtk-3.0/3.0.0/printbackends AppDir/gtk
         for f in /usr/lib/x86_64-linux-gnu/gtk-3.0/3.0.0/printbackends/*; do pwsh linux/packaging/appimage/bundle_deps.ps1 -executablePath "$f" -copyTo AppDir/lib; done
 
+    - name: Remove host graphics libraries
+      run: |
+        find AppDir/app/lib AppDir/lib -maxdepth 1 \( \
+          -name 'libEGL*' -o -name 'libGL*' -o -name 'libGLX*' -o -name 'libOpenGL*' \
+          -o -name 'libgbm*' -o -name 'libdrm*' -o -name 'libwayland*' \
+          -o -name 'libX11*' -o -name 'libxcb*' \
+        \) -delete
+        if find AppDir/app/lib AppDir/lib -maxdepth 1 \( \
+          -name 'libEGL*' -o -name 'libGL*' -o -name 'libGLX*' -o -name 'libOpenGL*' \
+          -o -name 'libgbm*' -o -name 'libdrm*' -o -name 'libwayland*' \
+          -o -name 'libX11*' -o -name 'libxcb*' \
+        \) -print -quit | grep -q .; then
+          echo 'Host graphics libraries remain in AppDir/lib'
+          exit 1
+        fi
+
     - name: Copy icon, desktop file and AppRun
       run: |
         cp linux/packaging/appimage/momentoBooth.desktop AppDir/
