@@ -1,7 +1,8 @@
 param ([string] $executablePath, [string] $copyTo)
 
 $libc_libs = "ld-linux-x86-64", "libBrokenLocale", "libanl", "libc", "libc_malloc_debug", "libdl", "libm", "libmemusage", "libmvec", "libnsl", "libnss_compat", "libnss_dns", "libnss_files", "libnss_hesiod", "libpcprofile", "libpthread", "libresolv", "librt", "libthread_db", "libutil", "libstdc++"
-$skip_libs = $libc_libs
+$graphics_libs = "libEGL", "libEGL_mesa", "libGL", "libGLX", "libGLX_mesa", "libGLdispatch", "libOpenGL", "libgbm", "libdrm", "libwayland-client", "libwayland-cursor", "libwayland-egl", "libwayland-server", "libX11", "libX11-xcb", "libXau", "libXdamage", "libXdmcp", "libXext", "libXfixes", "libXi", "libXinerama", "libXrandr", "libXrender", "libxcb", "libxcb-dri2", "libxcb-dri3", "libxcb-glx", "libxcb-present", "libxcb-randr", "libxcb-render", "libxcb-shape", "libxcb-shm", "libxcb-sync", "libxcb-xfixes"
+$skip_libs = $libc_libs + $graphics_libs
 
 $absolute_path = Resolve-Path $executablePath
 $absolute_copy_to_path = Resolve-Path $copyTo
